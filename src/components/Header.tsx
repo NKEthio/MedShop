@@ -18,6 +18,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet" // Added Sheet components
+import { Separator } from '@/components/ui/separator'; // Import Separator
 
 
 interface HeaderProps {
