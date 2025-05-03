@@ -7,6 +7,7 @@ export interface Product {
   imageUrl: string;
   category: string;
   dataAiHint: string;
+  sellerId: string; // Added to track the seller
 }
 
 export interface CartItem extends Product {

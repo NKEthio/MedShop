@@ -1,6 +1,6 @@
 
 import Link from 'next/link';
-import { ShoppingCart, User, LogOut, LogIn, UserPlus, Menu, PackagePlus, Store, ShieldCheck, Crown } from 'lucide-react'; // Added Crown icon
+import { ShoppingCart, User, LogOut, LogIn, UserPlus, Menu, PackagePlus, Store, ShieldCheck, Crown, PackageSearch } from 'lucide-react'; // Added Crown and PackageSearch icons
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
 import {
@@ -36,8 +36,19 @@ export default function Header({ cartItemCount }: HeaderProps) {
 
    const getInitials = (email: string | null | undefined) => {
     if (!email) return 'U'; // Default if email is null/undefined
-    return email.substring(0, 2).toUpperCase();
+    // More robust initial generation
+    const namePart = email.split('@')[0];
+    if (namePart.includes('.')) {
+        const parts = namePart.split('.');
+        return (parts[0][0] + (parts[1]?.[0] || '')).toUpperCase();
+    } else if (namePart.length >= 2) {
+        return namePart.substring(0, 2).toUpperCase();
+    } else if (namePart.length === 1) {
+        return namePart.toUpperCase();
+    }
+    return email.substring(0, 1).toUpperCase(); // Fallback to first letter
    };
+
 
   return (
     <header className="bg-secondary shadow-md sticky top-0 z-50">
@@ -52,16 +63,22 @@ export default function Header({ cartItemCount }: HeaderProps) {
           <Link href="/products" className="text-foreground hover:text-accent transition-colors">
             Products
           </Link>
-          {user && (
-            <Link href="/sell" className="text-foreground hover:text-accent transition-colors flex items-center gap-1">
-               <PackagePlus className="h-4 w-4" /> Sell
-            </Link>
-          )}
-           {/* Show Owner Dashboard link if user is admin */}
+          {/* Show Owner Dashboard link if user is admin */}
           {user && isAdmin && (
               <Link href="/admin/dashboard" className="text-foreground hover:text-accent transition-colors flex items-center gap-1 text-destructive font-medium">
                    <Crown className="h-4 w-4" /> Owner {/* Changed icon and text */}
               </Link>
+          )}
+           {/* Links specific to logged-in users */}
+          {user && !isAdmin && ( // Show only if logged in and NOT admin
+             <>
+                 <Link href="/my-products" className="text-foreground hover:text-accent transition-colors flex items-center gap-1">
+                    <PackageSearch className="h-4 w-4" /> My Products
+                 </Link>
+                 <Link href="/sell" className="text-foreground hover:text-accent transition-colors flex items-center gap-1">
+                    <PackagePlus className="h-4 w-4" /> Sell
+                 </Link>
+             </>
           )}
           <Link href="/cart" passHref>
             <Button variant="ghost" size="icon" className="relative" aria-label="Shopping Cart">
@@ -101,12 +118,23 @@ export default function Header({ cartItemCount }: HeaderProps) {
                         <span>Profile</span>
                     </Link>
                  </DropdownMenuItem>
-                  <DropdownMenuItem asChild>
-                    <Link href="/sell">
-                        <PackagePlus className="mr-2 h-4 w-4" />
-                        <span>Sell Product</span>
-                    </Link>
-                 </DropdownMenuItem>
+                 {/* My Products & Sell Links (Non-Admin) */}
+                 {!isAdmin && (
+                     <>
+                         <DropdownMenuItem asChild>
+                            <Link href="/my-products">
+                                <PackageSearch className="mr-2 h-4 w-4" />
+                                <span>My Products</span>
+                            </Link>
+                         </DropdownMenuItem>
+                         <DropdownMenuItem asChild>
+                            <Link href="/sell">
+                                <PackagePlus className="mr-2 h-4 w-4" />
+                                <span>Sell Product</span>
+                            </Link>
+                         </DropdownMenuItem>
+                     </>
+                 )}
                   {/* Owner Dashboard Link in Dropdown */}
                   {isAdmin && (
                     <DropdownMenuItem asChild>
@@ -173,17 +201,24 @@ export default function Header({ cartItemCount }: HeaderProps) {
                         <Link href="/products" className="text-foreground hover:text-accent transition-colors p-2 rounded hover:bg-secondary">
                             Products
                         </Link>
-                        {user && (
-                            <Link href="/sell" className="text-foreground hover:text-accent transition-colors p-2 rounded hover:bg-secondary flex items-center gap-2">
-                                <PackagePlus className="h-4 w-4" /> Sell Product
-                            </Link>
-                        )}
                         {/* Owner Dashboard link (Mobile) */}
                         {user && isAdmin && (
                             <Link href="/admin/dashboard" className="text-destructive font-medium hover:text-destructive/80 transition-colors p-2 rounded hover:bg-destructive/10 flex items-center gap-2">
                                 <Crown className="h-4 w-4" /> Owner Dashboard {/* Changed icon and text */}
                             </Link>
                         )}
+                        {/* My Products & Sell Links (Mobile - Non-Admin) */}
+                         {user && !isAdmin && (
+                            <>
+                                <Link href="/my-products" className="text-foreground hover:text-accent transition-colors p-2 rounded hover:bg-secondary flex items-center gap-2">
+                                    <PackageSearch className="h-4 w-4" /> My Products
+                                </Link>
+                                <Link href="/sell" className="text-foreground hover:text-accent transition-colors p-2 rounded hover:bg-secondary flex items-center gap-2">
+                                    <PackagePlus className="h-4 w-4" /> Sell Product
+                                </Link>
+                            </>
+                         )}
+
                         <Separator />
                         {user ? (
                              <>

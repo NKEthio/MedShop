@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useAuth } from '@/context/AuthContext';
@@ -5,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Loader2, LogOut, UserCircle2 } from 'lucide-react';
+import { Loader2, LogOut, UserCircle2, PackageSearch, PackagePlus } from 'lucide-react'; // Added PackageSearch
 import { useEffect } from 'react';
 import Link from 'next/link';
 
@@ -51,7 +52,7 @@ export default function ProfilePage() {
 
   return (
     <div className="container mx-auto px-4 py-12">
-      <Card className="w-full max-w-md mx-auto shadow-lg">
+      <Card className="w-full max-w-md mx-auto shadow-lg animate-fadeIn">
         <CardHeader className="text-center items-center">
            <Avatar className="h-20 w-20 mb-4">
              {/* Placeholder for user avatar image */}
@@ -61,7 +62,7 @@ export default function ProfilePage() {
              </AvatarFallback>
            </Avatar>
           <CardTitle className="text-2xl font-bold text-primary">Your Profile</CardTitle>
-          <CardDescription>Manage your account details.</CardDescription>
+          <CardDescription>Manage your account details and listings.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
            <div className="flex items-center space-x-3 p-3 border rounded-md">
@@ -77,9 +78,18 @@ export default function ProfilePage() {
                 <span className="text-sm text-muted-foreground">{user.metadata.creationTime ? new Date(user.metadata.creationTime).toLocaleDateString() : 'N/A'}</span>
              </div>
             */}
-             <div className="flex flex-col sm:flex-row gap-3 pt-4">
-                 <Link href="/sell" passHref className='w-full'>
-                     <Button variant="outline" className="w-full">List a Product</Button>
+             <div className="grid grid-cols-1 gap-3 pt-4">
+                  {/* Link to My Products */}
+                 <Link href="/my-products" passHref>
+                    <Button variant="outline" className="w-full flex items-center justify-center">
+                        <PackageSearch className="mr-2 h-4 w-4" /> My Products
+                    </Button>
+                 </Link>
+                 {/* Link to List a Product */}
+                 <Link href="/sell" passHref>
+                     <Button variant="outline" className="w-full flex items-center justify-center">
+                         <PackagePlus className="mr-2 h-4 w-4" /> List a Product
+                     </Button>
                  </Link>
                  {/* Placeholder for Edit Profile button */}
                  <Button variant="outline" className="w-full" disabled>Edit Profile (Soon)</Button>

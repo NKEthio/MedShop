@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState } from 'react';
@@ -15,6 +16,9 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, UploadCloud, PackagePlus } from 'lucide-react';
 import Link from 'next/link';
+import type { Product } from '@/types'; // Import Product type
+import { addProduct } from '@/data/products'; // Import function to add product
+
 
 // Zod schema for the product form
 // Added fields: category, imageUrl
@@ -59,7 +63,23 @@ export default function SellPage() {
         return;
     }
     setIsSubmitting(true);
-    console.log('Product Data Submitted:', data);
+
+    // In a real app, generate a unique ID on the backend
+    const productId = `prod_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+
+    const newProduct: Product = {
+        id: productId,
+        name: data.name,
+        description: data.description,
+        price: data.price,
+        category: data.category,
+        // Use provided URL or generate a placeholder if empty
+        imageUrl: data.imageUrl || `https://picsum.photos/seed/${productId}/400/300`,
+        dataAiHint: data.dataAiHint || data.name.split(' ').slice(0, 2).join(' '), // Simple hint from name
+        sellerId: user.uid, // Assign the current user's ID as the seller
+    };
+
+    console.log('Product Data Submitted:', newProduct);
 
     // **Placeholder for actual product saving logic**
     // In a real application, you would:
@@ -70,16 +90,18 @@ export default function SellPage() {
 
     try {
       // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await new Promise(resolve => setTimeout(resolve, 100)); // Reduced delay for simulation
 
-      // Assume success for now
+      // Add product using the imported function (simulates DB interaction)
+      addProduct(newProduct);
+
       toast({
         title: "Product Listed!",
         description: `"${data.name}" has been added successfully.`,
       });
       form.reset(); // Clear the form
-      // Optionally redirect to the products page or a seller dashboard
-      // router.push('/products');
+      // Redirect to the new "My Products" page after successful listing
+      router.push('/my-products');
     } catch (error) {
       console.error('Failed to add product:', error);
       toast({
@@ -108,7 +130,7 @@ export default function SellPage() {
         <h1 className="text-2xl font-bold mb-4 text-primary">Access Denied</h1>
         <p className="text-muted-foreground mb-6">You need to be logged in to list products for sale.</p>
         <div className="flex gap-4">
-            <Link href="/login" passHref>
+            <Link href="/login?redirect=/sell" passHref> {/* Redirect back after login */}
                 <Button>Log In</Button>
             </Link>
              <Link href="/signup" passHref>
@@ -122,7 +144,7 @@ export default function SellPage() {
   // Render the form if logged in
   return (
     <div className="container mx-auto px-4 py-12">
-      <Card className="w-full max-w-2xl mx-auto shadow-lg">
+      <Card className="w-full max-w-2xl mx-auto shadow-lg animate-fadeIn">
         <CardHeader className="text-center">
            <PackagePlus className="mx-auto h-10 w-10 text-primary mb-2" />
           <CardTitle className="text-2xl font-bold text-primary">List Your Product</CardTitle>
@@ -219,7 +241,7 @@ export default function SellPage() {
                       <Input type="url" placeholder="https://example.com/image.jpg" {...field} disabled={isSubmitting} />
                     </FormControl>
                     <FormDescription>
-                        Link to an image of your product. Ensure it's publicly accessible.
+                        Link to an image of your product. If left empty, a placeholder will be used.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
