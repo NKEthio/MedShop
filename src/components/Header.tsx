@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ShoppingCart, User, LogOut, LogIn, UserPlus, Menu, PackagePlus, Store } from 'lucide-react'; // Added Menu, PackagePlus, Store icons
+import { ShoppingCart, User, LogOut, LogIn, UserPlus, Menu, PackagePlus, Store, ShieldCheck } from 'lucide-react'; // Added Menu, PackagePlus, Store, ShieldCheck icons
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
 import {
@@ -26,7 +26,7 @@ interface HeaderProps {
 }
 
 export default function Header({ cartItemCount }: HeaderProps) {
-  const { user, logout } = useAuth();
+  const { user, logout, isAdmin } = useAuth(); // Added isAdmin
 
   const handleLogout = async () => {
     await logout();
@@ -56,6 +56,12 @@ export default function Header({ cartItemCount }: HeaderProps) {
             <Link href="/sell" className="text-foreground hover:text-accent transition-colors flex items-center gap-1">
                <PackagePlus className="h-4 w-4" /> Sell
             </Link>
+          )}
+           {/* Add Admin Dashboard link for admin users */}
+          {user && isAdmin && (
+              <Link href="/admin/dashboard" className="text-foreground hover:text-accent transition-colors flex items-center gap-1 text-destructive font-medium">
+                   <ShieldCheck className="h-4 w-4" /> Admin
+              </Link>
           )}
           <Link href="/cart" passHref>
             <Button variant="ghost" size="icon" className="relative" aria-label="Shopping Cart">
@@ -103,6 +109,15 @@ export default function Header({ cartItemCount }: HeaderProps) {
                         <span>Sell Product</span>
                     </Link>
                  </DropdownMenuItem>
+                 {/* Admin Dashboard Link in Dropdown */}
+                  {isAdmin && (
+                    <DropdownMenuItem asChild>
+                        <Link href="/admin/dashboard">
+                            <ShieldCheck className="mr-2 h-4 w-4 text-destructive" />
+                            <span className="text-destructive font-medium">Admin Dashboard</span>
+                        </Link>
+                    </DropdownMenuItem>
+                  )}
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleLogout} className="cursor-pointer text-destructive focus:text-destructive focus:bg-destructive/10">
                   <LogOut className="mr-2 h-4 w-4" />
@@ -165,6 +180,12 @@ export default function Header({ cartItemCount }: HeaderProps) {
                         {user && (
                             <Link href="/sell" className="text-foreground hover:text-accent transition-colors p-2 rounded hover:bg-secondary flex items-center gap-2">
                                 <PackagePlus className="h-4 w-4" /> Sell Product
+                            </Link>
+                        )}
+                        {/* Add Admin Dashboard link for admin users (Mobile) */}
+                        {user && isAdmin && (
+                            <Link href="/admin/dashboard" className="text-destructive font-medium hover:text-destructive/80 transition-colors p-2 rounded hover:bg-destructive/10 flex items-center gap-2">
+                                <ShieldCheck className="h-4 w-4" /> Admin Dashboard
                             </Link>
                         )}
                         <Separator />
