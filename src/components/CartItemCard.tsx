@@ -17,6 +17,7 @@ export default function CartItemCard({ item, onQuantityChange, onRemove }: CartI
     if (newQuantity >= 1) {
       onQuantityChange(item.id, newQuantity);
     } else if (newQuantity === 0) {
+      // Allow decreasing to 0 via button to trigger removal
       onRemove(item.id);
     }
   };
@@ -26,50 +27,57 @@ export default function CartItemCard({ item, onQuantityChange, onRemove }: CartI
       if (!isNaN(value) && value >= 1) {
           onQuantityChange(item.id, value);
       } else if (e.target.value === '' || (!isNaN(value) && value === 0)) {
-          // Allow removing by setting quantity to 0 or empty, but handle removal logic externally if needed
-          onQuantityChange(item.id, 1); // Reset to 1 if input is invalid/empty for simplicity, or handle removal
+          // Handle removal if input is cleared or set to 0
+          onRemove(item.id);
       }
+       // If input is invalid (e.g., negative, non-numeric), do nothing or revert (optional)
   };
 
   return (
-    <Card className="mb-4 shadow-sm">
-      <CardContent className="p-4 flex items-center space-x-4">
-        <div className="relative w-20 h-20 flex-shrink-0">
+    <Card className="mb-4 shadow-sm overflow-hidden">
+      {/* Added flex-wrap and gap for better wrapping on small screens */}
+      <CardContent className="p-3 sm:p-4 flex flex-wrap items-center gap-4">
+        <div className="relative w-16 h-16 sm:w-20 sm:h-20 flex-shrink-0">
           <Image
             src={item.imageUrl}
             alt={item.name}
             fill
-            sizes="80px"
+            sizes="(max-width: 640px) 64px, 80px"
             style={{ objectFit: 'cover' }}
             className="rounded-md"
             data-ai-hint={item.dataAiHint}
           />
         </div>
-        <div className="flex-grow">
-          <h3 className="font-semibold">{item.name}</h3>
-          <p className="text-sm text-muted-foreground">${item.price.toFixed(2)}</p>
+        {/* Adjusted flex-grow and width constraints */}
+        <div className="flex-grow min-w-[150px]">
+          <h3 className="font-semibold text-sm sm:text-base">{item.name}</h3>
+          <p className="text-xs sm:text-sm text-muted-foreground">${item.price.toFixed(2)}</p>
         </div>
-        <div className="flex items-center space-x-2">
-          <Button variant="outline" size="icon" onClick={() => handleQuantityChange(-1)} aria-label="Decrease quantity">
+        {/* Grouped quantity controls */}
+        <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
+          <Button variant="outline" size="icon" className="h-8 w-8 sm:h-9 sm:w-9" onClick={() => handleQuantityChange(-1)} aria-label="Decrease quantity">
             <Minus className="h-4 w-4" />
           </Button>
           <Input
             type="number"
-            min="1"
+            min="1" // Min attribute for native browser validation
             value={item.quantity}
             onChange={handleInputChange}
-            className="w-16 text-center h-9"
+            // Added min-w-16 for better spacing, adjusted height
+            className="w-12 sm:w-16 text-center h-8 sm:h-9 px-1"
             aria-label={`Quantity for ${item.name}`}
           />
-          <Button variant="outline" size="icon" onClick={() => handleQuantityChange(1)} aria-label="Increase quantity">
+          <Button variant="outline" size="icon" className="h-8 w-8 sm:h-9 sm:w-9" onClick={() => handleQuantityChange(1)} aria-label="Increase quantity">
             <Plus className="h-4 w-4" />
           </Button>
         </div>
-        <div className="text-right font-semibold w-24">
+         {/* Adjusted width and text alignment for consistency */}
+        <div className="text-right font-semibold w-20 sm:w-24 text-sm sm:text-base">
           ${(item.price * item.quantity).toFixed(2)}
         </div>
-        <Button variant="ghost" size="icon" onClick={() => onRemove(item.id)} className="text-destructive" aria-label={`Remove ${item.name} from cart`}>
-          <Trash2 className="h-5 w-5" />
+         {/* Ensured button is consistently placed */}
+        <Button variant="ghost" size="icon" onClick={() => onRemove(item.id)} className="text-destructive h-8 w-8 sm:h-9 sm:w-9 ml-auto sm:ml-0" aria-label={`Remove ${item.name} from cart`}>
+          <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" />
         </Button>
       </CardContent>
     </Card>

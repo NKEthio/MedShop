@@ -11,26 +11,28 @@ interface ProductCardProps {
 
 export default function ProductCard({ product, onAddToCart }: ProductCardProps) {
   return (
-    <Card className="flex flex-col overflow-hidden shadow-lg hover:shadow-xl transition-shadow duration-300">
+    // Added group class for hover effect targeting
+    <Card className="group flex flex-col overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out hover:scale-105">
       <CardHeader className="p-0">
-        <div className="relative w-full h-48">
+        {/* Added group-hover effect for image */}
+        <div className="relative w-full h-48 overflow-hidden"> {/* Ensure image container hides overflow */}
           <Image
             src={product.imageUrl}
             alt={product.name}
             fill
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw" // Adjusted sizes for responsiveness
             style={{ objectFit: 'cover' }}
-            className="rounded-t-lg"
+            className="rounded-t-lg transition-transform duration-300 ease-in-out group-hover:scale-110" // Scale image on hover
             data-ai-hint={product.dataAiHint}
           />
         </div>
       </CardHeader>
       <CardContent className="p-4 flex-grow">
-        <CardTitle className="text-lg font-semibold mb-1">{product.name}</CardTitle>
-        <CardDescription className="text-sm text-muted-foreground mb-2">{product.description}</CardDescription>
-        <p className="text-lg font-bold text-primary">${product.price.toFixed(2)}</p>
+        <CardTitle className="text-lg font-semibold mb-1 line-clamp-2">{product.name}</CardTitle> {/* Limit title lines */}
+        <CardDescription className="text-sm text-muted-foreground mb-2 line-clamp-3">{product.description}</CardDescription> {/* Limit description lines */}
+        <p className="text-lg font-bold text-primary mt-2">${product.price.toFixed(2)}</p> {/* Added margin top */}
       </CardContent>
-      <CardFooter className="p-4 pt-0">
+      <CardFooter className="p-4 pt-0 mt-auto"> {/* Ensure footer stays at bottom */}
         <Button onClick={() => onAddToCart(product)} className="w-full" aria-label={`Add ${product.name} to cart`}>
           <ShoppingCart className="mr-2 h-4 w-4" /> Add to Cart
         </Button>

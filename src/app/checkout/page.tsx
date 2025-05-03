@@ -137,7 +137,8 @@ export default function CheckoutPage() {
                 <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                    {/* Shipping Details */}
                    <h3 className="text-lg font-semibold border-b pb-2 mb-4">Shipping Address</h3>
-                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                   {/* Improved responsiveness for name/email fields */}
+                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                        <FormField
                         control={form.control}
                         name="fullName"
@@ -179,7 +180,8 @@ export default function CheckoutPage() {
                           </FormItem>
                         )}
                       />
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Improved responsiveness for city/state/zip */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                        <FormField
                         control={form.control}
                         name="city"
@@ -249,6 +251,7 @@ export default function CheckoutPage() {
                           </FormItem>
                         )}
                       />
+                     {/* Improved responsiveness for expiry/cvv */}
                      <div className="grid grid-cols-2 gap-4">
                        <FormField
                         control={form.control}
@@ -302,25 +305,29 @@ export default function CheckoutPage() {
             </CardHeader>
             <CardContent>
               {cartItems.length > 0 ? (
-                <div className="space-y-4 max-h-96 overflow-y-auto pr-2">
+                // Added responsive max-height
+                <div className="space-y-4 max-h-64 sm:max-h-96 overflow-y-auto pr-2">
                   {cartItems.map((item) => (
                     <div key={item.id} className="flex items-center space-x-3 border-b pb-2 last:border-b-0 last:pb-0">
-                      <div className="relative w-16 h-16 flex-shrink-0">
+                       {/* Responsive image size */}
+                      <div className="relative w-12 h-12 sm:w-16 sm:h-16 flex-shrink-0">
                          <Image
                             src={item.imageUrl}
                             alt={item.name}
                             fill
-                            sizes="64px"
+                            sizes="(max-width: 640px) 48px, 64px"
                             style={{ objectFit: 'cover' }}
                             className="rounded-md"
                             data-ai-hint={item.dataAiHint}
                           />
                       </div>
                       <div className="flex-grow">
-                        <p className="text-sm font-medium">{item.name}</p>
+                         {/* Adjusted text sizes for responsiveness */}
+                        <p className="text-xs sm:text-sm font-medium">{item.name}</p>
                         <p className="text-xs text-muted-foreground">Qty: {item.quantity}</p>
                       </div>
-                      <p className="text-sm font-semibold">${(item.price * item.quantity).toFixed(2)}</p>
+                       {/* Adjusted text sizes for responsiveness */}
+                      <p className="text-xs sm:text-sm font-semibold">${(item.price * item.quantity).toFixed(2)}</p>
                     </div>
                   ))}
                 </div>
@@ -328,23 +335,25 @@ export default function CheckoutPage() {
                 <p className="text-muted-foreground">Your cart is empty.</p>
               )}
                <Separator className="my-4" />
-                 <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
+                 {/* Adjusted text sizes for responsiveness */}
+                 <div className="space-y-2 text-sm sm:text-base">
+                    <div className="flex justify-between">
                         <span>Subtotal</span>
                         <span>${cartTotal.toFixed(2)}</span>
                     </div>
                     {/* Add potential shipping/tax calculation here */}
-                    <div className="flex justify-between text-sm">
+                    <div className="flex justify-between">
                         <span>Shipping</span>
                         <span>$0.00</span> {/* Placeholder */}
                     </div>
-                     <div className="flex justify-between text-sm">
+                     <div className="flex justify-between">
                         <span>Tax</span>
                         <span>$0.00</span> {/* Placeholder */}
                     </div>
                  </div>
                <Separator className="my-4" />
-               <div className="flex justify-between font-bold text-lg">
+                {/* Adjusted text sizes for responsiveness */}
+               <div className="flex justify-between font-bold text-base sm:text-lg">
                   <span>Total</span>
                   <span>${cartTotal.toFixed(2)}</span>
                </div>

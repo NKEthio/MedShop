@@ -47,8 +47,10 @@ export default function CartPage() {
           </Link>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2">
+        // Use flexbox for better control on small screens, revert to grid on larger screens
+        <div className="flex flex-col lg:flex-row gap-8">
+          {/* Cart items take full width on small screens, 2/3 on large */}
+          <div className="flex-grow lg:w-2/3">
             {cartItems.map((item) => (
               <CartItemCard
                 key={item.id}
@@ -61,8 +63,10 @@ export default function CartPage() {
                 <Button variant="outline" onClick={clearCart}>Clear Cart</Button>
              </div>
           </div>
-          <div className="lg:col-span-1">
-            <Card className="sticky top-24 shadow-lg">
+          {/* Order summary takes full width on small screens, 1/3 on large */}
+          <div className="lg:w-1/3">
+             {/* Make summary card sticky on large screens only */}
+            <Card className="shadow-lg lg:sticky top-24">
               <CardHeader>
                 <CardTitle>Order Summary</CardTitle>
               </CardHeader>
@@ -71,8 +75,12 @@ export default function CartPage() {
                   <span>Subtotal</span>
                   <span>${cartTotal.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between">
+                <div className="flex justify-between text-sm text-muted-foreground">
                   <span>Shipping</span>
+                  <span>Calculated at checkout</span>
+                </div>
+                 <div className="flex justify-between text-sm text-muted-foreground">
+                  <span>Tax</span>
                   <span>Calculated at checkout</span>
                 </div>
                 <Separator />

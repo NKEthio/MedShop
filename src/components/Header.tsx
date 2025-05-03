@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { ShoppingCart, User, LogOut, LogIn, UserPlus } from 'lucide-react';
+import { ShoppingCart, User, LogOut, LogIn, UserPlus, Menu } from 'lucide-react'; // Added Menu icon
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
 import {
@@ -11,6 +11,13 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet" // Added Sheet components
 
 
 interface HeaderProps {
@@ -33,10 +40,12 @@ export default function Header({ cartItemCount }: HeaderProps) {
   return (
     <header className="bg-secondary shadow-md sticky top-0 z-50">
       <div className="container mx-auto px-4 py-3 flex justify-between items-center">
-        <Link href="/" className="text-2xl font-bold text-primary">
+        <Link href="/" className="text-xl sm:text-2xl font-bold text-primary">
           MediShop
         </Link>
-        <nav className="flex items-center space-x-4">
+
+        {/* Desktop Navigation */}
+        <nav className="hidden md:flex items-center space-x-4">
           <Link href="/products" className="text-foreground hover:text-accent transition-colors">
             Products
           </Link>
@@ -44,14 +53,14 @@ export default function Header({ cartItemCount }: HeaderProps) {
             <Button variant="ghost" size="icon" className="relative" aria-label="Shopping Cart">
               <ShoppingCart className="h-6 w-6 text-accent" />
               {cartItemCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
                   {cartItemCount}
                 </span>
               )}
             </Button>
           </Link>
 
-           {/* Auth Section */}
+           {/* Auth Section (Desktop) */}
            {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -100,6 +109,62 @@ export default function Header({ cartItemCount }: HeaderProps) {
             </div>
            )}
         </nav>
+
+         {/* Mobile Navigation Trigger & Cart */}
+        <div className="flex md:hidden items-center space-x-2">
+             <Link href="/cart" passHref>
+                <Button variant="ghost" size="icon" className="relative" aria-label="Shopping Cart">
+                <ShoppingCart className="h-6 w-6 text-accent" />
+                {cartItemCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
+                    {cartItemCount}
+                    </span>
+                )}
+                </Button>
+            </Link>
+             <Sheet>
+                <SheetTrigger asChild>
+                    <Button variant="ghost" size="icon" aria-label="Open menu">
+                        <Menu className="h-6 w-6" />
+                    </Button>
+                </SheetTrigger>
+                <SheetContent side="right">
+                    <SheetHeader>
+                        <SheetTitle className="text-primary">Menu</SheetTitle>
+                    </SheetHeader>
+                    <nav className="flex flex-col space-y-4 mt-6">
+                         <Link href="/" className="text-foreground hover:text-accent transition-colors p-2 rounded hover:bg-secondary">
+                            Home
+                        </Link>
+                        <Link href="/products" className="text-foreground hover:text-accent transition-colors p-2 rounded hover:bg-secondary">
+                            Products
+                        </Link>
+                        <Separator />
+                        {user ? (
+                             <>
+                                <p className="px-2 text-sm text-muted-foreground">{user.email}</p>
+                                <Link href="/profile" className="text-foreground hover:text-accent transition-colors p-2 rounded hover:bg-secondary flex items-center">
+                                    <User className="mr-2 h-4 w-4" /> Profile
+                                </Link>
+                                <Button variant="ghost" onClick={handleLogout} className="justify-start p-2 text-destructive hover:text-destructive">
+                                    <LogOut className="mr-2 h-4 w-4" /> Log out
+                                </Button>
+                             </>
+                        ) : (
+                            <>
+                                <Link href="/login" className="text-foreground hover:text-accent transition-colors p-2 rounded hover:bg-secondary flex items-center">
+                                    <LogIn className="mr-2 h-4 w-4"/> Log In
+                                </Link>
+                                <Link href="/signup" className="text-foreground hover:text-accent transition-colors p-2 rounded hover:bg-secondary flex items-center">
+                                     <UserPlus className="mr-2 h-4 w-4"/> Sign Up
+                                </Link>
+                            </>
+                        )}
+                    </nav>
+                </SheetContent>
+            </Sheet>
+        </div>
+
       </div>
     </header>
   );
