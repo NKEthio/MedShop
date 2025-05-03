@@ -1,5 +1,6 @@
+
 import Link from 'next/link';
-import { ShoppingCart, User, LogOut, LogIn, UserPlus, Menu, PackagePlus, Store, ShieldCheck } from 'lucide-react'; // Added Menu, PackagePlus, Store, ShieldCheck icons
+import { ShoppingCart, User, LogOut, LogIn, UserPlus, Menu, PackagePlus, Store, ShieldCheck, Crown } from 'lucide-react'; // Added Crown icon
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
 import {
@@ -17,8 +18,8 @@ import {
   SheetHeader,
   SheetTitle,
   SheetTrigger,
-} from "@/components/ui/sheet"; // Added Sheet components
-import { Separator } from '@/components/ui/separator'; // Import Separator
+} from "@/components/ui/sheet";
+import { Separator } from '@/components/ui/separator';
 
 
 interface HeaderProps {
@@ -26,7 +27,7 @@ interface HeaderProps {
 }
 
 export default function Header({ cartItemCount }: HeaderProps) {
-  const { user, logout, isAdmin } = useAuth(); // Added isAdmin
+  const { user, logout, isAdmin } = useAuth(); // isAdmin still used internally
 
   const handleLogout = async () => {
     await logout();
@@ -42,7 +43,7 @@ export default function Header({ cartItemCount }: HeaderProps) {
     <header className="bg-secondary shadow-md sticky top-0 z-50">
       <div className="container mx-auto px-4 py-3 flex justify-between items-center">
         <Link href="/" className="text-xl sm:text-2xl font-bold text-primary flex items-center gap-2">
-           <Store className="h-6 w-6" /> {/* Added Store icon */}
+           <Store className="h-6 w-6" />
           MediShop
         </Link>
 
@@ -51,16 +52,15 @@ export default function Header({ cartItemCount }: HeaderProps) {
           <Link href="/products" className="text-foreground hover:text-accent transition-colors">
             Products
           </Link>
-          {/* Add Sell link for logged-in users */}
           {user && (
             <Link href="/sell" className="text-foreground hover:text-accent transition-colors flex items-center gap-1">
                <PackagePlus className="h-4 w-4" /> Sell
             </Link>
           )}
-           {/* Add Admin Dashboard link for admin users */}
+           {/* Show Owner Dashboard link if user is admin */}
           {user && isAdmin && (
               <Link href="/admin/dashboard" className="text-foreground hover:text-accent transition-colors flex items-center gap-1 text-destructive font-medium">
-                   <ShieldCheck className="h-4 w-4" /> Admin
+                   <Crown className="h-4 w-4" /> Owner {/* Changed icon and text */}
               </Link>
           )}
           <Link href="/cart" passHref>
@@ -80,7 +80,6 @@ export default function Header({ cartItemCount }: HeaderProps) {
               <DropdownMenuTrigger asChild>
                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                     <Avatar className="h-8 w-8">
-                        {/* Add AvatarImage if user has profile picture URL */}
                          {/* <AvatarImage src={user.photoURL || undefined} alt={user.displayName || user.email || 'User'} /> */}
                         <AvatarFallback>{getInitials(user.email)}</AvatarFallback>
                      </Avatar>
@@ -96,9 +95,8 @@ export default function Header({ cartItemCount }: HeaderProps) {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                {/* Add links to profile, settings, etc. here */}
                  <DropdownMenuItem asChild>
-                    <Link href="/profile"> {/* Assuming /profile route exists or will be created */}
+                    <Link href="/profile">
                         <User className="mr-2 h-4 w-4" />
                         <span>Profile</span>
                     </Link>
@@ -109,12 +107,12 @@ export default function Header({ cartItemCount }: HeaderProps) {
                         <span>Sell Product</span>
                     </Link>
                  </DropdownMenuItem>
-                 {/* Admin Dashboard Link in Dropdown */}
+                  {/* Owner Dashboard Link in Dropdown */}
                   {isAdmin && (
                     <DropdownMenuItem asChild>
                         <Link href="/admin/dashboard">
-                            <ShieldCheck className="mr-2 h-4 w-4 text-destructive" />
-                            <span className="text-destructive font-medium">Admin Dashboard</span>
+                            <Crown className="mr-2 h-4 w-4 text-destructive" /> {/* Changed icon */}
+                            <span className="text-destructive font-medium">Owner Dashboard</span> {/* Changed text */}
                         </Link>
                     </DropdownMenuItem>
                   )}
@@ -161,7 +159,6 @@ export default function Header({ cartItemCount }: HeaderProps) {
                 </SheetTrigger>
                 <SheetContent side="right">
                     <SheetHeader>
-                         {/* Use Link for Sheet Title to go home */}
                          <SheetTitle asChild>
                             <Link href="/" className="text-primary text-left flex items-center gap-2">
                                <Store className="h-5 w-5" /> MediShop
@@ -176,16 +173,15 @@ export default function Header({ cartItemCount }: HeaderProps) {
                         <Link href="/products" className="text-foreground hover:text-accent transition-colors p-2 rounded hover:bg-secondary">
                             Products
                         </Link>
-                         {/* Add Sell link for logged-in users (Mobile) */}
                         {user && (
                             <Link href="/sell" className="text-foreground hover:text-accent transition-colors p-2 rounded hover:bg-secondary flex items-center gap-2">
                                 <PackagePlus className="h-4 w-4" /> Sell Product
                             </Link>
                         )}
-                        {/* Add Admin Dashboard link for admin users (Mobile) */}
+                        {/* Owner Dashboard link (Mobile) */}
                         {user && isAdmin && (
                             <Link href="/admin/dashboard" className="text-destructive font-medium hover:text-destructive/80 transition-colors p-2 rounded hover:bg-destructive/10 flex items-center gap-2">
-                                <ShieldCheck className="h-4 w-4" /> Admin Dashboard
+                                <Crown className="h-4 w-4" /> Owner Dashboard {/* Changed icon and text */}
                             </Link>
                         )}
                         <Separator />
