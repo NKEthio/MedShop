@@ -1,3 +1,4 @@
+
 'use client';
 
 import type { ReactNode } from 'react';
@@ -24,6 +25,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAdminLoading, setIsAdminLoading] = useState<boolean>(true); // Start loading admin status
   const auth = getAuth(app); // Get auth instance
 
+  // Checks if the user's UID exists as a document ID in the 'admins' collection in Firestore.
+  // To make a user an admin (e.g., nuredinkassaw599@gmail.com), find their Firebase UID
+  // (you can see this in Firebase Authentication console) and create a document in the
+  // 'admins' collection with that UID as the document ID. The document can be empty or
+  // contain relevant admin information (e.g., { role: 'owner' }).
   const checkAdminStatus = useCallback(async (uid: string) => {
     setIsAdminLoading(true);
     setIsAdmin(false); // Reset admin status before check
