@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -91,6 +92,25 @@ export default function CheckoutPage() {
       const paymentSuccessful = await processPayment(paymentInfo);
 
       if (paymentSuccessful) {
+        // Simulate sending order to admin email
+        const orderDetailsForAdmin = {
+          customerInfo: data,
+          items: cartItems.map(item => ({
+            id: item.id,
+            name: item.name,
+            quantity: item.quantity,
+            price: item.price,
+            total: item.price * item.quantity,
+          })),
+          orderTotal: cartTotal,
+          orderDate: new Date().toISOString(),
+        };
+        console.log("SIMULATING SENDING ORDER TO ADMIN: info1079net@gmail.com");
+        console.log("Order Details:", JSON.stringify(orderDetailsForAdmin, null, 2));
+        // In a real app, you would call an API endpoint here to send an email.
+        // Example: await fetch('/api/send-order-email', { method: 'POST', body: JSON.stringify(orderDetailsForAdmin) });
+
+
         toast({
           title: "Payment Successful!",
           description: "Your order has been placed.",
@@ -367,3 +387,6 @@ export default function CheckoutPage() {
     </div>
   );
 }
+
+
+    
