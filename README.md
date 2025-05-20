@@ -45,29 +45,84 @@ This is a Next.js starter project for MediShop, an e-commerce platform for medic
 *   TypeScript
 *   Tailwind CSS with ShadCN/UI components
 *   Firebase Authentication (Email/Password)
-*   Firestore for data (Admin roles)
+*   Firestore for data (User roles: Admin, Seller, Buyer)
 *   Shopping Cart functionality (`useCart` hook)
 *   Basic Checkout Flow (stubbed payment processing)
-*   Product Listing and Detail Pages (including selling, editing, deleting)
+*   Product Listing and Detail Pages (including selling, editing, deleting for authorized users)
 *   Owner Dashboard for Admins
+*   Profile Page displaying user role
 *   Responsive Design
 *   **(Optional)** Genkit integration for potential GenAI features (requires setup)
 
-## Setting up an Admin/Owner User
+## Setting up User Roles (Admin, Seller, Buyer)
 
-To designate a user as an admin (owner) and grant them access to the Owner Dashboard (`/admin/dashboard`):
+User roles are managed in Firestore.
 
-1.  **Create a user account** in your application (e.g., using the Sign Up page). Let's say the user's email is `nuredinkassaw599@gmail.com`.
-2.  **Find the user's Firebase UID:** Go to your Firebase project console -> Authentication -> Users tab. Find the user by their email and copy their User UID.
-3.  **Go to Firestore Database:** In your Firebase project console -> Firestore Database -> Data tab.
-4.  **Create the `admins` collection:** If it doesn't exist, click "Start collection", enter `admins` as the Collection ID, and click Next.
-5.  **Add an admin document:**
-    *   Click "Add document".
-    *   For the **Document ID**, paste the **User UID** you copied in step 2.
-    *   You can leave the fields empty or add relevant fields (e.g., `role: "owner"`). The application currently only checks for the *existence* of the document ID in the `admins` collection.
+### Admin Role:
+There are two ways to designate a user as an admin:
+
+1.  **Primary Method (via `users` collection - Recommended for all roles):**
+    *   Create a user account in your application.
+    *   Find the user's Firebase UID (Firebase console -> Authentication -> Users).
+    *   Go to Firestore Database -> Data tab.
+    *   Create a collection named `users` if it doesn't exist.
+    *   Add a new document to the `users` collection. Set the **Document ID** to the user's UID.
+    *   Inside this document, add a field:
+        *   **Field name:** `role`
+        *   **Field type:** `string`
+        *   **Field value:** `admin`
     *   Click "Save".
 
-Now, when the user with that UID logs in, the application will recognize them as an admin, and the "Owner" link will appear in the header, allowing access to the dashboard.
+2.  **Legacy Method (via `admins` collection - Still works for 'admin'):**
+    *   Create a user account (e.g., `nuredinkassaw599@gmail.com`).
+    *   Find their Firebase UID.
+    *   Go to Firestore Database -> Data tab.
+    *   Create the `admins` collection if it doesn't exist.
+    *   Add a document to the `admins` collection:
+        *   **Document ID:** User's UID.
+        *   Fields can be empty or have `role: "owner"`. The existence of the UID as a document ID is sufficient for admin rights through this legacy method.
+    *   Click "Save".
+
+The `AuthProvider` will first check the `admins` collection. If the user's UID is found there, they are an 'admin'. Otherwise, it checks the `users/{UID}` document for a `role` field.
+
+### Seller Role:
+
+1.  **Create a user account.**
+2.  **Find the user's Firebase UID.**
+3.  **Go to Firestore Database -> Data tab.**
+4.  **Ensure the `users` collection exists.**
+5.  **Add/Update the user's document in the `users` collection:**
+    *   If a document with the user's UID as ID doesn't exist, create it.
+    *   Add/Set a field:
+        *   **Field name:** `role`
+        *   **Field type:** `string`
+        *   **Field value:** `seller`
+    *   Click "Save".
+
+Sellers will have access to the "Sell" and "My Products" pages.
+
+### Buyer Role (Default):
+
+If a user is not found in the `admins` collection and does not have a specific `role` field in their `users/{UID}` document (or the document doesn't exist), they will default to the 'buyer' role. Buyers can browse products, add to cart, and checkout.
+
+**Example `users` collection structure:**
+
+```
+users/
+  {userUID_1}/
+    role: "admin"
+    // other fields...
+  {userUID_2}/
+    role: "seller"
+    // other fields...
+  {userUID_3}/
+    role: "buyer"
+    // other fields...
+  {userUID_4}/
+    // (no role field, will default to buyer)
+```
+
+When a user with the 'admin' role logs in, the "Owner" link will appear in the header. Users with 'seller' role will see "Sell" and "My Products" links.
 
 ## Environment Variables Needed
 
@@ -78,4 +133,4 @@ Now, when the user with that UID logs in, the application will recognize them as
 *   `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`
 *   `NEXT_PUBLIC_FIREBASE_APP_ID`
 *   `GOOGLE_GENAI_API_KEY` (Optional, for Genkit)
-
+```

@@ -1,6 +1,6 @@
 
 import Link from 'next/link';
-import { ShoppingCart, User, LogOut, LogIn, UserPlus, Menu, PackagePlus, Store, ShieldCheck, Crown, PackageSearch } from 'lucide-react'; // Added Crown and PackageSearch icons
+import { ShoppingCart, User, LogOut, LogIn, UserPlus, Menu, PackagePlus, Store, Crown, PackageSearch } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/context/AuthContext';
 import {
@@ -27,16 +27,14 @@ interface HeaderProps {
 }
 
 export default function Header({ cartItemCount }: HeaderProps) {
-  const { user, logout, isAdmin } = useAuth(); // isAdmin still used internally
+  const { user, logout, userRole } = useAuth();
 
   const handleLogout = async () => {
     await logout();
-    // Optional: Add toast notification for successful logout
   };
 
    const getInitials = (email: string | null | undefined) => {
-    if (!email) return 'U'; // Default if email is null/undefined
-    // More robust initial generation
+    if (!email) return 'U';
     const namePart = email.split('@')[0];
     if (namePart.includes('.')) {
         const parts = namePart.split('.');
@@ -46,7 +44,7 @@ export default function Header({ cartItemCount }: HeaderProps) {
     } else if (namePart.length === 1) {
         return namePart.toUpperCase();
     }
-    return email.substring(0, 1).toUpperCase(); // Fallback to first letter
+    return email.substring(0, 1).toUpperCase();
    };
 
 
@@ -63,14 +61,14 @@ export default function Header({ cartItemCount }: HeaderProps) {
           <Link href="/products" className="text-foreground hover:text-accent transition-colors">
             Products
           </Link>
-          {/* Show Owner Dashboard link if user is admin */}
-          {user && isAdmin && (
+          
+          {userRole === 'admin' && (
               <Link href="/admin/dashboard" className="text-foreground hover:text-accent transition-colors flex items-center gap-1 text-destructive font-medium">
-                   <Crown className="h-4 w-4" /> Owner {/* Changed icon and text */}
+                   <Crown className="h-4 w-4" /> Owner
               </Link>
           )}
-           {/* Links specific to logged-in users */}
-          {user && !isAdmin && ( // Show only if logged in and NOT admin
+          
+          {(userRole === 'seller' || userRole === 'admin') && (
              <>
                  <Link href="/my-products" className="text-foreground hover:text-accent transition-colors flex items-center gap-1">
                     <PackageSearch className="h-4 w-4" /> My Products
@@ -80,6 +78,7 @@ export default function Header({ cartItemCount }: HeaderProps) {
                  </Link>
              </>
           )}
+
           <Link href="/cart" passHref>
             <Button variant="ghost" size="icon" className="relative" aria-label="Shopping Cart">
               <ShoppingCart className="h-6 w-6 text-accent" />
@@ -91,13 +90,11 @@ export default function Header({ cartItemCount }: HeaderProps) {
             </Button>
           </Link>
 
-           {/* Auth Section (Desktop) */}
            {user ? (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
                     <Avatar className="h-8 w-8">
-                         {/* <AvatarImage src={user.photoURL || undefined} alt={user.displayName || user.email || 'User'} /> */}
                         <AvatarFallback>{getInitials(user.email)}</AvatarFallback>
                      </Avatar>
                  </Button>
@@ -105,7 +102,7 @@ export default function Header({ cartItemCount }: HeaderProps) {
               <DropdownMenuContent className="w-56" align="end" forceMount>
                 <DropdownMenuLabel className="font-normal">
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">Account</p>
+                    <p className="text-sm font-medium leading-none">Account ({userRole})</p>
                     <p className="text-xs leading-none text-muted-foreground">
                        {user.email}
                     </p>
@@ -118,8 +115,8 @@ export default function Header({ cartItemCount }: HeaderProps) {
                         <span>Profile</span>
                     </Link>
                  </DropdownMenuItem>
-                 {/* My Products & Sell Links (Non-Admin) */}
-                 {!isAdmin && (
+                 
+                 {(userRole === 'seller' || userRole === 'admin') && (
                      <>
                          <DropdownMenuItem asChild>
                             <Link href="/my-products">
@@ -135,12 +132,12 @@ export default function Header({ cartItemCount }: HeaderProps) {
                          </DropdownMenuItem>
                      </>
                  )}
-                  {/* Owner Dashboard Link in Dropdown */}
-                  {isAdmin && (
+                 
+                  {userRole === 'admin' && (
                     <DropdownMenuItem asChild>
                         <Link href="/admin/dashboard">
-                            <Crown className="mr-2 h-4 w-4 text-destructive" /> {/* Changed icon */}
-                            <span className="text-destructive font-medium">Owner Dashboard</span> {/* Changed text */}
+                            <Crown className="mr-2 h-4 w-4 text-destructive" />
+                            <span className="text-destructive font-medium">Owner Dashboard</span>
                         </Link>
                     </DropdownMenuItem>
                   )}
@@ -167,7 +164,6 @@ export default function Header({ cartItemCount }: HeaderProps) {
            )}
         </nav>
 
-         {/* Mobile Navigation Trigger & Cart */}
         <div className="flex md:hidden items-center space-x-2">
              <Link href="/cart" passHref>
                 <Button variant="ghost" size="icon" className="relative" aria-label="Shopping Cart">
@@ -201,14 +197,14 @@ export default function Header({ cartItemCount }: HeaderProps) {
                         <Link href="/products" className="text-foreground hover:text-accent transition-colors p-2 rounded hover:bg-secondary">
                             Products
                         </Link>
-                        {/* Owner Dashboard link (Mobile) */}
-                        {user && isAdmin && (
+                        
+                        {userRole === 'admin' && (
                             <Link href="/admin/dashboard" className="text-destructive font-medium hover:text-destructive/80 transition-colors p-2 rounded hover:bg-destructive/10 flex items-center gap-2">
-                                <Crown className="h-4 w-4" /> Owner Dashboard {/* Changed icon and text */}
+                                <Crown className="h-4 w-4" /> Owner Dashboard
                             </Link>
                         )}
-                        {/* My Products & Sell Links (Mobile - Non-Admin) */}
-                         {user && !isAdmin && (
+                        
+                         {(userRole === 'seller' || userRole === 'admin') && (
                             <>
                                 <Link href="/my-products" className="text-foreground hover:text-accent transition-colors p-2 rounded hover:bg-secondary flex items-center gap-2">
                                     <PackageSearch className="h-4 w-4" /> My Products
@@ -219,10 +215,10 @@ export default function Header({ cartItemCount }: HeaderProps) {
                             </>
                          )}
 
-                        <Separator />
+                        <Separator className="my-4" />
                         {user ? (
                              <>
-                                <p className="px-2 py-1 text-sm font-medium text-muted-foreground">Account</p>
+                                <p className="px-2 py-1 text-sm font-medium text-muted-foreground">Account ({userRole})</p>
                                 <p className="px-2 text-xs text-muted-foreground -mt-1 mb-1">{user.email}</p>
                                 <Link href="/profile" className="text-foreground hover:text-accent transition-colors p-2 rounded hover:bg-secondary flex items-center">
                                     <User className="mr-2 h-4 w-4" /> Profile

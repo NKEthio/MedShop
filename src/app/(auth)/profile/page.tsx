@@ -4,31 +4,29 @@
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
-import { Loader2, LogOut, UserCircle2, PackageSearch, PackagePlus } from 'lucide-react'; // Added PackageSearch
+import { Loader2, LogOut, UserCircle2, PackageSearch, PackagePlus, ShieldCheck, Briefcase } from 'lucide-react';
 import { useEffect } from 'react';
 import Link from 'next/link';
 
 export default function ProfilePage() {
-  const { user, loading, logout } = useAuth();
+  const { user, userRole, loading, roleLoading, logout } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    // Redirect to login if not authenticated and not loading
-    if (!loading && !user) {
-      router.replace('/login?redirect=/profile'); // Redirect back to profile after login
+    if (!loading && !roleLoading && !user) {
+      router.replace('/login?redirect=/profile');
     }
-  }, [user, loading, router]);
+  }, [user, loading, roleLoading, router]);
 
   const handleLogout = async () => {
     await logout();
-    router.push('/'); // Redirect to homepage after logout
+    router.push('/');
   };
 
   const getInitials = (email: string | null | undefined) => {
     if (!email) return '??';
-    // More robust initial generation, handles names like "John Doe" or just "john"
     const parts = email.split('@')[0].split(/[\.\s_-]/).filter(Boolean);
     if (parts.length >= 2) {
         return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
@@ -37,12 +35,20 @@ export default function ProfilePage() {
     } else if (parts.length === 1) {
         return parts[0][0].toUpperCase();
     }
-    return 'U'; // Fallback
+    return 'U';
    };
 
+  const getRoleIcon = () => {
+    switch (userRole) {
+      case 'admin': return <ShieldCheck className="h-5 w-5 text-destructive" />;
+      case 'seller': return <Briefcase className="h-5 w-5 text-blue-500" />;
+      case 'buyer': return <UserCircle2 className="h-5 w-5 text-green-500" />;
+      default: return <UserCircle2 className="h-5 w-5 text-muted-foreground" />;
+    }
+  };
 
-  if (loading || !user) {
-    // Show loader while checking auth or if redirecting
+
+  if (loading || roleLoading || !user) {
     return (
       <div className="container mx-auto px-4 py-16 flex justify-center items-center min-h-[calc(100vh-200px)]">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -55,8 +61,6 @@ export default function ProfilePage() {
       <Card className="w-full max-w-md mx-auto shadow-lg animate-fadeIn">
         <CardHeader className="text-center items-center">
            <Avatar className="h-20 w-20 mb-4">
-             {/* Placeholder for user avatar image */}
-             {/* <AvatarImage src={user.photoURL || undefined} alt={user.displayName || user.email || 'User'} /> */}
              <AvatarFallback className="text-3xl">
                {getInitials(user.email)}
              </AvatarFallback>
@@ -70,28 +74,27 @@ export default function ProfilePage() {
                 <span className="text-sm font-medium">Email:</span>
                 <span className="text-sm text-muted-foreground truncate">{user.email}</span>
            </div>
-            {/* Add more profile details here as needed */}
-            {/* Example:
-             <div className="flex items-center space-x-3 p-3 border rounded-md">
-                <Calendar className="h-5 w-5 text-muted-foreground" />
-                <span className="text-sm font-medium">Joined:</span>
-                <span className="text-sm text-muted-foreground">{user.metadata.creationTime ? new Date(user.metadata.creationTime).toLocaleDateString() : 'N/A'}</span>
-             </div>
-            */}
+            <div className="flex items-center space-x-3 p-3 border rounded-md">
+                {getRoleIcon()}
+                <span className="text-sm font-medium">Role:</span>
+                <span className="text-sm text-muted-foreground capitalize">{userRole || 'N/A'}</span>
+           </div>
+            
              <div className="grid grid-cols-1 gap-3 pt-4">
-                  {/* Link to My Products */}
-                 <Link href="/my-products" passHref>
-                    <Button variant="outline" className="w-full flex items-center justify-center">
-                        <PackageSearch className="mr-2 h-4 w-4" /> My Products
-                    </Button>
-                 </Link>
-                 {/* Link to List a Product */}
-                 <Link href="/sell" passHref>
-                     <Button variant="outline" className="w-full flex items-center justify-center">
-                         <PackagePlus className="mr-2 h-4 w-4" /> List a Product
-                     </Button>
-                 </Link>
-                 {/* Placeholder for Edit Profile button */}
+                  {(userRole === 'seller' || userRole === 'admin') && (
+                    <>
+                      <Link href="/my-products" passHref>
+                        <Button variant="outline" className="w-full flex items-center justify-center">
+                            <PackageSearch className="mr-2 h-4 w-4" /> My Products
+                        </Button>
+                      </Link>
+                      <Link href="/sell" passHref>
+                          <Button variant="outline" className="w-full flex items-center justify-center">
+                              <PackagePlus className="mr-2 h-4 w-4" /> List a Product
+                          </Button>
+                      </Link>
+                    </>
+                  )}
                  <Button variant="outline" className="w-full" disabled>Edit Profile (Soon)</Button>
              </div>
 

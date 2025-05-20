@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useEffect } from 'react';
@@ -10,20 +11,20 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, loading: authLoading, isAdmin, isAdminLoading } = useAuth();
+  const { user, loading: authLoading, userRole, roleLoading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    const isLoading = authLoading || isAdminLoading;
+    const isLoading = authLoading || roleLoading;
     // If finished loading and user is not logged in OR not an admin, redirect
-    if (!isLoading && (!user || !isAdmin)) {
-      console.log("Redirecting: Not admin or not logged in", { isLoading, user, isAdmin }); // Debug log
+    if (!isLoading && (!user || userRole !== 'admin')) {
+      console.log("Redirecting: Not admin or not logged in", { isLoading, user, userRole }); // Debug log
       router.replace('/'); // Redirect to home page
     }
-  }, [user, authLoading, isAdmin, isAdminLoading, router]);
+  }, [user, authLoading, userRole, roleLoading, router]);
 
   // Show loader while checking auth state or admin status
-  if (authLoading || isAdminLoading) {
+  if (authLoading || roleLoading) {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -32,7 +33,7 @@ export default function AdminLayout({
   }
 
   // If user is logged in and is an admin, render the children (admin pages)
-  if (user && isAdmin) {
+  if (user && userRole === 'admin') {
     return <>{children}</>;
   }
 

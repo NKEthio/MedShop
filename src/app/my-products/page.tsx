@@ -4,7 +4,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
-import { products as allProducts, deleteProduct as deleteProductFromData, updateProduct as updateProductInData } from '@/data/products'; // Import mock data and functions
+import { products as allProducts, deleteProduct as deleteProductFromData, updateProduct as updateProductInData } from '@/data/products';
 import type { Product } from '@/types';
 import ProductCard from '@/components/ProductCard';
 import { Button } from '@/components/ui/button';
@@ -19,7 +19,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import {
     Dialog,
@@ -28,7 +27,6 @@ import {
     DialogFooter,
     DialogHeader,
     DialogTitle,
-    DialogTrigger,
     DialogClose,
 } from "@/components/ui/dialog";
 import { useForm } from 'react-hook-form';
@@ -36,12 +34,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Label } from '@/components/ui/label';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 
-// Schema for editing a product (similar to sell page, but all fields optional potentially, or handled differently)
-// For simplicity, we reuse a similar schema but make imageUrl optional as it might already exist
 const editProductSchema = z.object({
   name: z.string().min(3, { message: 'Product name must be at least 3 characters.' }),
   description: z.string().min(10, { message: 'Description must be at least 10 characters.' }),
@@ -50,7 +45,7 @@ const editProductSchema = z.object({
     .positive({ message: 'Price must be positive.' })
     .min(0.01, { message: 'Price must be at least $0.01.' }),
   category: z.string().min(2, { message: 'Category must be at least 2 characters.' }),
-  imageUrl: z.string().url({ message: 'Invalid URL format.' }).optional().or(z.literal('')), // Keep optional
+  imageUrl: z.string().url({ message: 'Invalid URL format.' }).optional().or(z.literal('')),
   dataAiHint: z.string().optional(),
 });
 
@@ -58,19 +53,18 @@ type EditProductFormData = z.infer<typeof editProductSchema>;
 
 
 export default function MyProductsPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, userRole, loading: authLoading, roleLoading } = useAuth();
   const router = useRouter();
+  const { toast } = useToast();
   const [myProducts, setMyProducts] = useState<Product[]>([]);
   const [isLoadingProducts, setIsLoadingProducts] = useState(true);
-  const [productToDelete, setProductToDelete] = useState<string | null>(null); // ID of product pending deletion
-  const [productToEdit, setProductToEdit] = useState<Product | null>(null); // Product object pending edit
+  const [productToDelete, setProductToDelete] = useState<string | null>(null);
+  const [productToEdit, setProductToEdit] = useState<Product | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const { toast } = useToast();
-
 
   const form = useForm<EditProductFormData>({
       resolver: zodResolver(editProductSchema),
-      defaultValues: { // Set default values when dialog opens
+      defaultValues: {
           name: '',
           description: '',
           price: 0,
@@ -80,22 +74,24 @@ export default function MyProductsPage() {
       },
   });
 
-
-  // Effect to filter products once user data is available
   useEffect(() => {
-    if (!authLoading && user) {
-      setIsLoadingProducts(true);
-      // Simulate fetching/filtering user's products
-      const userProducts = allProducts.filter(p => p.sellerId === user.uid);
-      setMyProducts(userProducts);
-      setIsLoadingProducts(false);
-    } else if (!authLoading && !user) {
-      // Redirect if user is not logged in
-      router.replace('/login?redirect=/my-products');
+    const isLoading = authLoading || roleLoading;
+    if (!isLoading) {
+      if (!user || (userRole !== 'seller' && userRole !== 'admin')) {
+        toast({ title: "Access Denied", description: "You must be a seller or admin to view this page.", variant: "destructive" });
+        router.replace(user ? '/' : '/login?redirect=/my-products');
+      } else if (user) {
+        setIsLoadingProducts(true);
+        // Admins see all products, sellers see only their own.
+        const userProducts = userRole === 'admin' 
+          ? allProducts 
+          : allProducts.filter(p => p.sellerId === user.uid);
+        setMyProducts(userProducts);
+        setIsLoadingProducts(false);
+      }
     }
-  }, [user, authLoading, router]);
+  }, [user, userRole, authLoading, roleLoading, router, toast]);
 
-  // Effect to populate form when productToEdit changes
   useEffect(() => {
     if (productToEdit) {
         form.reset({
@@ -112,53 +108,40 @@ export default function MyProductsPage() {
 
   const handleEdit = (product: Product) => {
     setProductToEdit(product);
-    // Dialog trigger will open the dialog
   };
 
   const handleDeleteClick = (productId: string) => {
     setProductToDelete(productId);
-    // AlertDialog trigger will open the confirmation
   };
 
   const confirmDelete = () => {
     if (productToDelete) {
-       console.log("Attempting to delete product (mock):", productToDelete);
-      // Use the imported delete function (simulates DB interaction)
       const success = deleteProductFromData(productToDelete);
-
       if (success) {
-          // Update local state to reflect deletion
           setMyProducts(prev => prev.filter(p => p.id !== productToDelete));
           toast({ title: "Success", description: "Product deleted." });
       } else {
           toast({ title: "Error", description: "Failed to delete product.", variant: "destructive" });
       }
-      setProductToDelete(null); // Close dialog
+      setProductToDelete(null);
     }
   };
 
    const onSubmitEdit = async (data: EditProductFormData) => {
         if (!productToEdit) return;
         setIsSubmitting(true);
-
         const updatedProduct: Product = {
-            ...productToEdit, // Spread existing product data
-            ...data, // Overwrite with form data
-            imageUrl: data.imageUrl || productToEdit.imageUrl, // Keep original image if new URL is empty
+            ...productToEdit,
+            ...data,
+            imageUrl: data.imageUrl || productToEdit.imageUrl,
         };
-
-        console.log('Updating product (mock):', updatedProduct);
-
         try {
-            // Simulate API call
             await new Promise(resolve => setTimeout(resolve, 500));
-            const success = updateProductInData(updatedProduct); // Update mock data
-
+            const success = updateProductInData(updatedProduct);
             if (success) {
-                // Update local state
                 setMyProducts(prev => prev.map(p => p.id === updatedProduct.id ? updatedProduct : p));
                 toast({ title: "Success", description: "Product updated." });
-                setProductToEdit(null); // Close dialog
+                setProductToEdit(null);
             } else {
                  throw new Error("Failed to update product in mock data.");
             }
@@ -170,9 +153,7 @@ export default function MyProductsPage() {
         }
     };
 
-
-  // Loading state for initial auth check
-  if (authLoading) {
+  if (authLoading || roleLoading || (!user && !authLoading && !roleLoading)) { // Also show loader if user object is not yet available but not loading anymore
     return (
       <div className="container mx-auto px-4 py-16 flex justify-center items-center min-h-[calc(100vh-200px)]">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -180,21 +161,19 @@ export default function MyProductsPage() {
     );
   }
 
-  // User not logged in (should be handled by redirect, but good fallback)
-  if (!user) {
+  if (!user || (userRole !== 'seller' && userRole !== 'admin')) {
     return (
       <div className="container mx-auto px-4 py-16 flex flex-col justify-center items-center min-h-[calc(100vh-200px)] text-center">
          <PackageSearch className="h-16 w-16 text-destructive mb-4" />
-        <h1 className="text-2xl font-bold mb-4 text-primary">Please Log In</h1>
-        <p className="text-muted-foreground mb-6">You need to be logged in to view your products.</p>
-        <Link href="/login?redirect=/my-products" passHref>
-            <Button>Log In</Button>
+        <h1 className="text-2xl font-bold mb-4 text-primary">Access Denied</h1>
+        <p className="text-muted-foreground mb-6">You do not have permission to view this page.</p>
+        <Link href={user ? "/" : "/login?redirect=/my-products"} passHref>
+            <Button>{user ? "Go to Homepage" : "Log In"}</Button>
         </Link>
       </div>
     );
   }
 
-  // Loading state for user's products
   if (isLoadingProducts) {
      return (
       <div className="container mx-auto px-4 py-16 flex justify-center items-center min-h-[calc(100vh-200px)]">
@@ -207,21 +186,29 @@ export default function MyProductsPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="flex justify-between items-center mb-8">
-         <h1 className="text-3xl font-bold text-primary">My Listed Products</h1>
-         <Link href="/sell" passHref>
-           <Button>
-             <PackagePlus className="mr-2 h-4 w-4" /> List New Product
-           </Button>
-         </Link>
+         <h1 className="text-3xl font-bold text-primary">
+           {userRole === 'admin' ? 'All Listed Products' : 'My Listed Products'}
+         </h1>
+         {(userRole === 'seller' || userRole === 'admin') && (
+            <Link href="/sell" passHref>
+              <Button>
+                <PackagePlus className="mr-2 h-4 w-4" /> List New Product
+              </Button>
+            </Link>
+         )}
       </div>
 
       {myProducts.length === 0 ? (
         <div className="text-center py-16 border border-dashed rounded-lg">
             <PackageSearch className="mx-auto h-16 w-16 text-muted-foreground mb-4" />
-            <p className="text-xl text-muted-foreground mb-4">You haven't listed any products yet.</p>
-            <Link href="/sell" passHref>
-                <Button variant="outline">List Your First Product</Button>
-            </Link>
+            <p className="text-xl text-muted-foreground mb-4">
+              {userRole === 'admin' ? 'No products have been listed yet.' : "You haven't listed any products yet."}
+            </p>
+            {(userRole === 'seller' || userRole === 'admin') && (
+                <Link href="/sell" passHref>
+                    <Button variant="outline">List Your First Product</Button>
+                </Link>
+            )}
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
@@ -229,15 +216,15 @@ export default function MyProductsPage() {
             <ProductCard
               key={product.id}
               product={product}
-              showActions={true} // Enable edit/delete buttons
-              onEdit={() => handleEdit(product)} // Pass edit handler
-              onDelete={handleDeleteClick} // Pass delete handler (opens confirmation)
+              // Show actions if admin OR if seller and it's their product
+              showActions={userRole === 'admin' || (userRole === 'seller' && product.sellerId === user?.uid)}
+              onEdit={() => handleEdit(product)}
+              onDelete={() => handleDeleteClick(product.id)}
             />
           ))}
         </div>
       )}
 
-        {/* Edit Product Dialog */}
         <Dialog open={!!productToEdit} onOpenChange={(isOpen) => !isOpen && setProductToEdit(null)}>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
@@ -283,8 +270,6 @@ export default function MyProductsPage() {
             </DialogContent>
         </Dialog>
 
-
-      {/* Delete Confirmation Dialog */}
       <AlertDialog open={!!productToDelete} onOpenChange={(isOpen) => !isOpen && setProductToDelete(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -302,7 +287,6 @@ export default function MyProductsPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
     </div>
   );
 }

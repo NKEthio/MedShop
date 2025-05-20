@@ -7,12 +7,13 @@ import { getAuth, onAuthStateChanged, type User } from 'firebase/auth';
 import { doc, getDoc } from 'firebase/firestore';
 import { app, db } from '@/lib/firebase'; // Import initialized Firebase app and db
 import { Loader2 } from 'lucide-react';
+import type { UserRole } from '@/types';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean; // Initial auth state loading
-  isAdmin: boolean;
-  isAdminLoading: boolean; // Loading state for admin check
+  userRole: UserRole;
+  roleLoading: boolean; // Loading state for role check
   logout: () => Promise<void>;
 }
 
@@ -21,45 +22,54 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true); // For initial auth check
-  const [isAdmin, setIsAdmin] = useState<boolean>(false);
-  const [isAdminLoading, setIsAdminLoading] = useState<boolean>(true); // Start loading admin status
+  const [userRole, setUserRole] = useState<UserRole>(null);
+  const [roleLoading, setRoleLoading] = useState<boolean>(true); // Start loading role status
   const auth = getAuth(app); // Get auth instance
 
-  // Checks if the user's UID exists as a document ID in the 'admins' collection in Firestore.
-  // To make a user an admin (e.g., nuredinkassaw599@gmail.com), find their Firebase UID
-  // (you can see this in Firebase Authentication console) and create a document in the
-  // 'admins' collection with that UID as the document ID. The document can be empty or
-  // contain relevant admin information (e.g., { role: 'owner' }).
-  const checkAdminStatus = useCallback(async (uid: string) => {
-    setIsAdminLoading(true);
-    setIsAdmin(false); // Reset admin status before check
-    console.log("Checking admin status for UID:", uid); // Debug log
+  const fetchUserRole = useCallback(async (uid: string) => {
+    setRoleLoading(true);
+    setUserRole(null); // Reset role status before check
+    console.log("Fetching user role for UID:", uid);
+
     if (!uid) {
-        setIsAdminLoading(false);
-        return;
+      setUserRole('buyer'); // Default to buyer if no UID
+      setRoleLoading(false);
+      return;
     }
+
     try {
-      const adminDocRef = doc(db, 'admins', uid); // Check document in 'admins' collection with user's UID
+      // 1. Check 'admins' collection (for 'admin' role primarily)
+      const adminDocRef = doc(db, 'admins', uid);
       const adminDocSnap = await getDoc(adminDocRef);
       if (adminDocSnap.exists()) {
-         console.log("User is admin."); // Debug log
-        // Optionally check for a specific field like `isAdmin: true`
-        // const data = adminDocSnap.data();
-        // if (data && data.isAdmin === true) {
-        //   setIsAdmin(true);
-        // } else {
-        //    setIsAdmin(false); // Document exists but doesn't confirm admin role
-        // }
-         setIsAdmin(true); // Document existence is enough for this example
+        console.log("User is admin (from admins collection).");
+        setUserRole('admin');
+        setRoleLoading(false);
+        return;
+      }
+
+      // 2. If not in 'admins', check 'users' collection for a 'role' field
+      const userDocRef = doc(db, 'users', uid);
+      const userDocSnap = await getDoc(userDocRef);
+      if (userDocSnap.exists()) {
+        const userData = userDocSnap.data();
+        if (userData && userData.role && ['admin', 'seller', 'buyer'].includes(userData.role)) {
+          console.log(`User role from users collection: ${userData.role}`);
+          setUserRole(userData.role as UserRole);
+        } else {
+          console.log("User document exists but no valid role field, defaulting to buyer.");
+          setUserRole('buyer'); // Default if role field is missing or invalid
+        }
       } else {
-         console.log("User is not admin."); // Debug log
-         setIsAdmin(false);
+        // 3. If no document in 'users' collection, default to 'buyer'
+        console.log("User not found in admins or users collection, defaulting to buyer.");
+        setUserRole('buyer');
       }
     } catch (error) {
-      console.error("Error checking admin status:", error);
-      setIsAdmin(false); // Assume not admin if error occurs
+      console.error("Error fetching user role:", error);
+      setUserRole('buyer'); // Default to buyer on error
     } finally {
-      setIsAdminLoading(false);
+      setRoleLoading(false);
     }
   }, []);
 
@@ -70,37 +80,32 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false); // Initial auth check finished
 
       if (currentUser) {
-        // If user is logged in, check their admin status
-        await checkAdminStatus(currentUser.uid);
+        await fetchUserRole(currentUser.uid);
       } else {
-        // If user is logged out, reset admin status
-        setIsAdmin(false);
-        setIsAdminLoading(false); // No admin check needed
+        setUserRole(null);
+        setRoleLoading(false); 
       }
     });
 
-    // Cleanup subscription on unmount
     return () => unsubscribe();
-  }, [auth, checkAdminStatus]);
+  }, [auth, fetchUserRole]);
 
   const logout = async () => {
-    setLoading(true); // Use general loading state for logout process
-    setIsAdminLoading(true); // Reset admin loading state
-    setIsAdmin(false); // Reset admin status immediately
+    setLoading(true); 
+    setRoleLoading(true); 
+    setUserRole(null); 
     try {
       await auth.signOut();
-      setUser(null); // Explicitly set user to null on logout
+      setUser(null); 
     } catch (error) {
       console.error("Error signing out: ", error);
-      // Handle logout error (e.g., show toast)
     } finally {
       setLoading(false);
-      setIsAdminLoading(false); // Ensure loading states are reset
+      setRoleLoading(false); 
     }
   };
 
-  // Show loading indicator while checking initial auth state OR admin status
-  if (loading || (user && isAdminLoading)) {
+  if (loading || (user && roleLoading)) {
     return (
         <div className="flex justify-center items-center min-h-screen">
             <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -109,7 +114,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, isAdmin, isAdminLoading, logout }}>
+    <AuthContext.Provider value={{ user, loading, userRole, roleLoading, logout }}>
       {children}
     </AuthContext.Provider>
   );

@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -9,37 +9,32 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea'; // Added Textarea import
-import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, UploadCloud, PackagePlus } from 'lucide-react';
 import Link from 'next/link';
-import type { Product } from '@/types'; // Import Product type
-import { addProduct } from '@/data/products'; // Import function to add product
+import type { Product } from '@/types';
+import { addProduct } from '@/data/products';
 
 
-// Zod schema for the product form
-// Added fields: category, imageUrl
-// Adjusted types: price is numeric
 const productSchema = z.object({
   name: z.string().min(3, { message: 'Product name must be at least 3 characters.' }),
   description: z.string().min(10, { message: 'Description must be at least 10 characters.' }),
-  price: z.coerce // Use coerce for automatic string-to-number conversion
+  price: z.coerce
     .number({ invalid_type_error: 'Price must be a number.' })
     .positive({ message: 'Price must be positive.' })
     .min(0.01, { message: 'Price must be at least $0.01.' }),
   category: z.string().min(2, { message: 'Category must be at least 2 characters.' }),
-  imageUrl: z.string().url({ message: 'Please enter a valid image URL (e.g., https://...).' }).or(z.literal('')), // Optional URL
-  // TODO: Add actual image file upload field if needed later
-  dataAiHint: z.string().optional(), // Optional AI hint
+  imageUrl: z.string().url({ message: 'Please enter a valid image URL (e.g., https://...).' }).or(z.literal('')),
+  dataAiHint: z.string().optional(),
 });
 
 type ProductFormData = z.infer<typeof productSchema>;
 
 export default function SellPage() {
-  const { user, loading: authLoading } = useAuth();
+  const { user, userRole, loading: authLoading, roleLoading } = useAuth();
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -49,22 +44,29 @@ export default function SellPage() {
     defaultValues: {
       name: '',
       description: '',
-      price: undefined, // Start with undefined for number input
+      price: undefined,
       category: '',
       imageUrl: '',
       dataAiHint: '',
     },
   });
 
-  // Handle form submission
+  useEffect(() => {
+    const isLoading = authLoading || roleLoading;
+    if (!isLoading && (!user || (userRole !== 'seller' && userRole !== 'admin'))) {
+      toast({ title: "Access Denied", description: "You must be a seller or admin to list products.", variant: "destructive" });
+      router.replace(user ? '/' : '/login?redirect=/sell');
+    }
+  }, [user, userRole, authLoading, roleLoading, router, toast]);
+
+
   const onSubmit = async (data: ProductFormData) => {
-    if (!user) {
-        toast({ title: "Authentication Error", description: "You must be logged in to sell products.", variant: "destructive" });
+    if (!user || (userRole !== 'seller' && userRole !== 'admin')) {
+        toast({ title: "Authentication Error", description: "You must be a seller or admin to list products.", variant: "destructive" });
         return;
     }
     setIsSubmitting(true);
 
-    // In a real app, generate a unique ID on the backend
     const productId = `prod_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
     const newProduct: Product = {
@@ -73,34 +75,21 @@ export default function SellPage() {
         description: data.description,
         price: data.price,
         category: data.category,
-        // Use provided URL or generate a placeholder if empty
         imageUrl: data.imageUrl || `https://picsum.photos/seed/${productId}/400/300`,
-        dataAiHint: data.dataAiHint || data.name.split(' ').slice(0, 2).join(' '), // Simple hint from name
-        sellerId: user.uid, // Assign the current user's ID as the seller
+        dataAiHint: data.dataAiHint || data.name.split(' ').slice(0, 2).join(' '),
+        sellerId: user.uid,
     };
 
     console.log('Product Data Submitted:', newProduct);
 
-    // **Placeholder for actual product saving logic**
-    // In a real application, you would:
-    // 1. Upload the image file (if using file upload) to a storage service (like Firebase Storage).
-    // 2. Get the public URL of the uploaded image.
-    // 3. Send the product data (including the image URL) to your backend API.
-    // 4. The API would save the data to a database (like Firestore).
-
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 100)); // Reduced delay for simulation
-
-      // Add product using the imported function (simulates DB interaction)
+      await new Promise(resolve => setTimeout(resolve, 100));
       addProduct(newProduct);
-
       toast({
         title: "Product Listed!",
         description: `"${data.name}" has been added successfully.`,
       });
-      form.reset(); // Clear the form
-      // Redirect to the new "My Products" page after successful listing
+      form.reset();
       router.push('/my-products');
     } catch (error) {
       console.error('Failed to add product:', error);
@@ -114,8 +103,7 @@ export default function SellPage() {
     }
   };
 
-  // Handle loading state and authentication check
-  if (authLoading) {
+  if (authLoading || roleLoading) {
     return (
       <div className="container mx-auto px-4 py-16 flex justify-center items-center min-h-[calc(100vh-200px)]">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -123,25 +111,26 @@ export default function SellPage() {
     );
   }
 
-  if (!user) {
+  if (!user || (userRole !== 'seller' && userRole !== 'admin')) {
     return (
       <div className="container mx-auto px-4 py-16 flex flex-col justify-center items-center min-h-[calc(100vh-200px)] text-center">
          <PackagePlus className="h-16 w-16 text-destructive mb-4" />
         <h1 className="text-2xl font-bold mb-4 text-primary">Access Denied</h1>
-        <p className="text-muted-foreground mb-6">You need to be logged in to list products for sale.</p>
+        <p className="text-muted-foreground mb-6">
+          You need to be a seller or admin to list products for sale.
+        </p>
         <div className="flex gap-4">
-            <Link href="/login?redirect=/sell" passHref> {/* Redirect back after login */}
-                <Button>Log In</Button>
+            <Link href={user ? "/" : "/login?redirect=/sell"} passHref>
+                <Button>{user ? "Go to Homepage" : "Log In"}</Button>
             </Link>
-             <Link href="/signup" passHref>
+             {!user && <Link href="/signup" passHref>
                 <Button variant="outline">Sign Up</Button>
-            </Link>
+            </Link>}
         </div>
       </div>
     );
   }
 
-  // Render the form if logged in
   return (
     <div className="container mx-auto px-4 py-12">
       <Card className="w-full max-w-2xl mx-auto shadow-lg animate-fadeIn">
@@ -189,7 +178,6 @@ export default function SellPage() {
                 )}
               />
 
-              {/* Use grid for Price and Category */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                  <FormField
                     control={form.control}
@@ -198,16 +186,14 @@ export default function SellPage() {
                       <FormItem>
                         <FormLabel>Price ($)</FormLabel>
                         <FormControl>
-                          {/* Use type="number" with step for decimal input */}
                           <Input
                             type="number"
                             placeholder="e.g., 29.99"
                             step="0.01"
                             {...field}
                             disabled={isSubmitting}
-                            // onChange handler needed for react-hook-form with type=number
                             onChange={(e) => field.onChange(e.target.value === '' ? undefined : +e.target.value)}
-                            value={field.value ?? ''} // Handle potential undefined value
+                            value={field.value ?? ''}
                           />
                         </FormControl>
                         <FormMessage />
@@ -223,7 +209,6 @@ export default function SellPage() {
                         <FormLabel>Category</FormLabel>
                         <FormControl>
                           <Input placeholder="e.g., Diagnostics, Mobility" {...field} disabled={isSubmitting} />
-                          {/* TODO: Consider replacing with a Select component if categories are predefined */}
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -248,7 +233,6 @@ export default function SellPage() {
                 )}
               />
 
-              {/* Optional: Add AI Hint Field */}
                <FormField
                 control={form.control}
                 name="dataAiHint"
@@ -266,15 +250,12 @@ export default function SellPage() {
                 )}
               />
 
-
-              {/* Placeholder for actual file upload - visually distinct */}
               <FormItem className="border border-dashed p-4 rounded-md text-center">
                   <FormLabel className="flex flex-col items-center cursor-pointer">
                       <UploadCloud className="h-8 w-8 text-muted-foreground mb-2" />
                       <span className="text-sm font-medium">Upload Product Image (Coming Soon)</span>
                       <span className="text-xs text-muted-foreground mt-1">Drag & drop or click to browse</span>
                   </FormLabel>
-                   {/* Hidden file input - non-functional for now */}
                   <FormControl>
                     <Input type="file" className="sr-only" disabled />
                   </FormControl>
@@ -293,9 +274,6 @@ export default function SellPage() {
             </form>
           </Form>
         </CardContent>
-          <CardFooter>
-              {/* Optional: Add link back to products or dashboard */}
-          </CardFooter>
       </Card>
     </div>
   );

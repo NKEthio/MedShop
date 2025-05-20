@@ -13,3 +13,5 @@ export interface Product {
 export interface CartItem extends Product {
   quantity: number;
 }
+
+export type UserRole = 'admin' | 'seller' | 'buyer' | null;
