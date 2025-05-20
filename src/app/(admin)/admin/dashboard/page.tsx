@@ -50,8 +50,10 @@ export default function AdminDashboardPage() {
                     <FileText className="h-5 w-5 text-muted-foreground" />
                  </CardHeader>
                  <CardContent>
-                    <p className="text-sm text-muted-foreground">View and process customer orders (coming soon).</p>
-                    {/* <Button variant="outline" className="mt-3 w-full" disabled>Manage Orders</Button> */}
+                    <p className="text-sm text-muted-foreground">View and manage customer orders.</p>
+                     <Link href="/admin/orders" passHref>
+                        <Button variant="outline" className="mt-3 w-full">Manage Orders</Button>
+                     </Link>
                  </CardContent>
               </Card>
                <Card>
