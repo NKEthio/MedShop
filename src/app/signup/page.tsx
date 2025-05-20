@@ -53,11 +53,14 @@ export default function SignupPage() {
       const user = userCredential.user;
       console.log('Signup successful:', user);
 
-      // Save user role to Firestore
+      // Save user role and email to Firestore
       if (user) {
         const userDocRef = doc(db, 'users', user.uid);
-        await setDoc(userDocRef, { role: data.role as UserRole }); // Cast role to UserRole
-        console.log('User role saved to Firestore:', data.role);
+        await setDoc(userDocRef, { 
+          role: data.role as UserRole,
+          email: user.email // Store the email
+        });
+        console.log('User role and email saved to Firestore:', data.role, user.email);
       }
 
       toast({

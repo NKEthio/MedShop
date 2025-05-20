@@ -26,8 +26,10 @@ export default function AdminDashboardPage() {
                     <Users className="h-5 w-5 text-muted-foreground" />
                  </CardHeader>
                  <CardContent>
-                    <p className="text-sm text-muted-foreground">View and manage user accounts and roles (coming soon).</p>
-                    {/* <Button variant="outline" className="mt-3 w-full" disabled>Manage Users</Button> */}
+                    <p className="text-sm text-muted-foreground">View and manage user accounts and roles.</p>
+                    <Link href="/admin/users" passHref>
+                      <Button variant="outline" className="mt-3 w-full">Manage Users</Button>
+                    </Link>
                  </CardContent>
               </Card>
               <Card>
