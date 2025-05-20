@@ -1,28 +1,32 @@
+
 'use client';
 
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore'; // Import setDoc
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"; // Import RadioGroup
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, UserPlus } from 'lucide-react';
-import { auth } from '@/lib/firebase'; // Use initialized auth instance
+import { auth, db } from '@/lib/firebase'; // Use initialized auth and db instance
+import type { UserRole } from '@/types'; // Import UserRole type
 
 const signupSchema = z.object({
   email: z.string().email({ message: 'Invalid email address.' }),
   password: z.string().min(6, { message: 'Password must be at least 6 characters.' }),
   confirmPassword: z.string(),
+  role: z.enum(['buyer', 'seller'], { required_error: 'Please select a role.' }), // Add role field
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
-  path: ['confirmPassword'], // path of error
+  path: ['confirmPassword'], 
 });
 
 type SignupFormData = z.infer<typeof signupSchema>;
@@ -38,6 +42,7 @@ export default function SignupPage() {
       email: '',
       password: '',
       confirmPassword: '',
+      role: undefined, // Default to undefined
     },
   });
 
@@ -45,7 +50,16 @@ export default function SignupPage() {
     setIsLoading(true);
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
-      console.log('Signup successful:', userCredential.user);
+      const user = userCredential.user;
+      console.log('Signup successful:', user);
+
+      // Save user role to Firestore
+      if (user) {
+        const userDocRef = doc(db, 'users', user.uid);
+        await setDoc(userDocRef, { role: data.role as UserRole }); // Cast role to UserRole
+        console.log('User role saved to Firestore:', data.role);
+      }
+
       toast({
         title: "Signup Successful!",
         description: "Welcome! You have been successfully registered.",
@@ -116,6 +130,41 @@ export default function SignupPage() {
                     <FormLabel>Confirm Password</FormLabel>
                     <FormControl>
                       <Input type="password" placeholder="••••••••" {...field} disabled={isLoading}/>
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="role"
+                render={({ field }) => (
+                  <FormItem className="space-y-3">
+                    <FormLabel>I am a...</FormLabel>
+                    <FormControl>
+                      <RadioGroup
+                        onValueChange={field.onChange}
+                        defaultValue={field.value}
+                        className="flex flex-col space-y-1"
+                        disabled={isLoading}
+                      >
+                        <FormItem className="flex items-center space-x-3 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="buyer" />
+                          </FormControl>
+                          <FormLabel className="font-normal">
+                            Buyer
+                          </FormLabel>
+                        </FormItem>
+                        <FormItem className="flex items-center space-x-3 space-y-0">
+                          <FormControl>
+                            <RadioGroupItem value="seller" />
+                          </FormControl>
+                          <FormLabel className="font-normal">
+                            Seller
+                          </FormLabel>
+                        </FormItem>
+                      </RadioGroup>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
