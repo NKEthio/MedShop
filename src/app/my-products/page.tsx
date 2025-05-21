@@ -133,16 +133,18 @@ export default function MyProductsPage() {
         const updatedProduct: Product = {
             ...productToEdit,
             ...data,
-            imageUrl: data.imageUrl || productToEdit.imageUrl,
+            imageUrl: data.imageUrl || productToEdit.imageUrl, // Keep original image if new URL is empty
         };
         try {
-            await new Promise(resolve => setTimeout(resolve, 500));
+            // Simulate API call
+            await new Promise(resolve => setTimeout(resolve, 500)); 
             const success = updateProductInData(updatedProduct);
             if (success) {
                 setMyProducts(prev => prev.map(p => p.id === updatedProduct.id ? updatedProduct : p));
                 toast({ title: "Success", description: "Product updated." });
-                setProductToEdit(null);
+                setProductToEdit(null); // Close dialog
             } else {
+                 // This case might not be easily reachable with mock data if findIndex always works
                  throw new Error("Failed to update product in mock data.");
             }
         } catch (error) {
@@ -153,7 +155,7 @@ export default function MyProductsPage() {
         }
     };
 
-  if (authLoading || roleLoading || (!user && !authLoading && !roleLoading)) { // Also show loader if user object is not yet available but not loading anymore
+  if (authLoading || roleLoading || (!user && !authLoading && !roleLoading)) {
     return (
       <div className="container mx-auto px-4 py-16 flex justify-center items-center min-h-[calc(100vh-200px)]">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -216,7 +218,6 @@ export default function MyProductsPage() {
             <ProductCard
               key={product.id}
               product={product}
-              // Show actions if admin OR if seller and it's their product
               showActions={userRole === 'admin' || (userRole === 'seller' && product.sellerId === user?.uid)}
               onEdit={() => handleEdit(product)}
               onDelete={() => handleDeleteClick(product.id)}
@@ -226,47 +227,49 @@ export default function MyProductsPage() {
       )}
 
         <Dialog open={!!productToEdit} onOpenChange={(isOpen) => !isOpen && setProductToEdit(null)}>
-            <DialogContent className="sm:max-w-[425px]">
+            <DialogContent className="sm:max-w-[425px] flex flex-col max-h-[85vh] gap-4">
                 <DialogHeader>
                     <DialogTitle>Edit Product</DialogTitle>
                     <DialogDescription>
                         Make changes to your product details below. Click save when you're done.
                     </DialogDescription>
                 </DialogHeader>
-                 <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmitEdit)} className="space-y-4 py-4">
-                       <FormField control={form.control} name="name" render={({ field }) => (
-                           <FormItem> <FormLabel>Name</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem>
-                       )} />
-                        <FormField control={form.control} name="description" render={({ field }) => (
-                             <FormItem> <FormLabel>Description</FormLabel> <FormControl><Textarea {...field} className="min-h-[80px]" /></FormControl> <FormMessage /> </FormItem>
+                <div className="flex-grow overflow-y-auto pr-3"> {/* Added pr-3 for scrollbar space */}
+                  <Form {...form}>
+                      <form id="edit-product-form" onSubmit={form.handleSubmit(onSubmitEdit)} className="space-y-4 py-1"> {/* Reduced py-4 to py-1 or removed if DialogContent gap is enough */}
+                        <FormField control={form.control} name="name" render={({ field }) => (
+                            <FormItem> <FormLabel>Name</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem>
                         )} />
-                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                             <FormField control={form.control} name="price" render={({ field }) => (
-                                 <FormItem> <FormLabel>Price ($)</FormLabel> <FormControl><Input type="number" step="0.01" {...field} onChange={e => field.onChange(e.target.value === '' ? undefined : +e.target.value)} value={field.value ?? ''}/></FormControl> <FormMessage /> </FormItem>
-                             )} />
-                             <FormField control={form.control} name="category" render={({ field }) => (
-                                 <FormItem> <FormLabel>Category</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem>
-                             )} />
-                         </div>
-                         <FormField control={form.control} name="imageUrl" render={({ field }) => (
-                             <FormItem> <FormLabel>Image URL</FormLabel> <FormControl><Input type="url" {...field} /></FormControl><FormDescription>Leave blank to keep current image.</FormDescription> <FormMessage /> </FormItem>
-                         )} />
-                         <FormField control={form.control} name="dataAiHint" render={({ field }) => (
-                             <FormItem> <FormLabel>Image Hint</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem>
-                         )} />
-
-                         <DialogFooter>
-                             <DialogClose asChild>
-                                <Button type="button" variant="outline" disabled={isSubmitting}>Cancel</Button>
-                             </DialogClose>
-                            <Button type="submit" disabled={isSubmitting}>
-                                {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                                Save Changes
-                            </Button>
-                        </DialogFooter>
-                    </form>
-                </Form>
+                          <FormField control={form.control} name="description" render={({ field }) => (
+                              <FormItem> <FormLabel>Description</FormLabel> <FormControl><Textarea {...field} className="min-h-[80px]" /></FormControl> <FormMessage /> </FormItem>
+                          )} />
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              <FormField control={form.control} name="price" render={({ field }) => (
+                                  <FormItem> <FormLabel>Price ($)</FormLabel> <FormControl><Input type="number" step="0.01" {...field} onChange={e => field.onChange(e.target.value === '' ? undefined : +e.target.value)} value={field.value ?? ''}/></FormControl> <FormMessage /> </FormItem>
+                              )} />
+                              <FormField control={form.control} name="category" render={({ field }) => (
+                                  <FormItem> <FormLabel>Category</FormLabel> <FormControl><Input {...field} /></FormControl> <FormMessage /> </FormItem>
+                              )} />
+                          </div>
+                          <FormField control={form.control} name="imageUrl" render={({ field }) => (
+                              <FormItem> <FormLabel>Image URL</FormLabel> <FormControl><Input type="url" {...field} /></FormControl><FormDescription>Leave blank to keep current image.</FormDescription> <FormMessage /> </FormItem>
+                          )} />
+                          <FormField control={form.control} name="dataAiHint" render={({ field }) => (
+                              <FormItem> <FormLabel>Image Hint</FormLabel> <FormControl><Input {...field} /></FormControl> <FormDescription>Keywords for placeholder (e.g. "medical device").</FormDescription><FormMessage /> </FormItem>
+                          )} />
+                           {/* Add more fields here if needed, and they will be part of the scrollable area */}
+                      </form>
+                  </Form>
+                </div>
+                <DialogFooter>
+                    <DialogClose asChild>
+                      <Button type="button" variant="outline" disabled={isSubmitting}>Cancel</Button>
+                    </DialogClose>
+                  <Button type="submit" form="edit-product-form" disabled={isSubmitting}>
+                      {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                      Save Changes
+                  </Button>
+                </DialogFooter>
             </DialogContent>
         </Dialog>
 
