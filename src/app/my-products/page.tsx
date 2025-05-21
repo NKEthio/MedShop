@@ -241,7 +241,7 @@ export default function MyProductsPage() {
                         <FormField control={form.control} name="description" render={({ field }) => (
                              <FormItem> <FormLabel>Description</FormLabel> <FormControl><Textarea {...field} className="min-h-[80px]" /></FormControl> <FormMessage /> </FormItem>
                         )} />
-                         <div className="grid grid-cols-2 gap-4">
+                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                              <FormField control={form.control} name="price" render={({ field }) => (
                                  <FormItem> <FormLabel>Price ($)</FormLabel> <FormControl><Input type="number" step="0.01" {...field} onChange={e => field.onChange(e.target.value === '' ? undefined : +e.target.value)} value={field.value ?? ''}/></FormControl> <FormMessage /> </FormItem>
                              )} />

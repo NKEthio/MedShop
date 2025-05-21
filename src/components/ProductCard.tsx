@@ -43,11 +43,11 @@ export default function ProductCard({
       </CardContent>
       <CardFooter className="p-4 pt-0 mt-auto">
         {showActions ? (
-          <div className="flex w-full gap-2">
-            <Button onClick={() => onEdit?.(product)} className="w-1/2" variant="outline" size="sm" aria-label={`Edit ${product.name}`}>
+          <div className="flex flex-col space-y-2 sm:flex-row sm:space-y-0 sm:space-x-2 w-full">
+            <Button onClick={() => onEdit?.(product)} className="w-full sm:w-1/2" variant="outline" size="sm" aria-label={`Edit ${product.name}`}>
               <Edit className="mr-1 h-4 w-4" /> Edit
             </Button>
-            <Button onClick={() => onDelete?.(product.id)} className="w-1/2" variant="destructive" size="sm" aria-label={`Delete ${product.name}`}>
+            <Button onClick={() => onDelete?.(product.id)} className="w-full sm:w-1/2" variant="destructive" size="sm" aria-label={`Delete ${product.name}`}>
               <Trash2 className="mr-1 h-4 w-4" /> Delete
             </Button>
           </div>
@@ -62,3 +62,4 @@ export default function ProductCard({
     </Card>
   );
 }
+
