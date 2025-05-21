@@ -13,11 +13,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, UploadCloud, PackagePlus } from 'lucide-react';
+import { Loader2, PackagePlus } from 'lucide-react'; // Removed UploadCloud as it's integrated now
 import Link from 'next/link';
 import type { Product } from '@/types';
 import { addProduct } from '@/data/products';
-
+import Image from 'next/image'; // Added for image preview
 
 const productSchema = z.object({
   name: z.string().min(3, { message: 'Product name must be at least 3 characters.' }),
@@ -27,7 +27,7 @@ const productSchema = z.object({
     .positive({ message: 'Price must be positive.' })
     .min(0.01, { message: 'Price must be at least $0.01.' }),
   category: z.string().min(2, { message: 'Category must be at least 2 characters.' }),
-  imageUrl: z.string().url({ message: 'Please enter a valid image URL (e.g., https://...).' }).or(z.literal('')),
+  imageUrl: z.string().url({ message: 'Please enter a valid image URL or upload an image.' }).or(z.literal('')), // Will store Data URL if uploaded
   dataAiHint: z.string().optional(),
 });
 
@@ -38,6 +38,9 @@ export default function SellPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
 
   const form = useForm<ProductFormData>({
     resolver: zodResolver(productSchema),
@@ -69,27 +72,35 @@ export default function SellPage() {
 
     const productId = `prod_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
+    // Use the Data URL from the form if an image was uploaded, otherwise generate placeholder
+    const imageUrl = data.imageUrl || `https://picsum.photos/seed/${productId}/400/300`;
+    const finalDataAiHint = data.imageUrl ? data.name.split(' ').slice(0,2).join(' ') : (data.dataAiHint || data.name.split(' ').slice(0, 2).join(' '));
+
+
     const newProduct: Product = {
         id: productId,
         name: data.name,
         description: data.description,
         price: data.price,
         category: data.category,
-        imageUrl: data.imageUrl || `https://picsum.photos/seed/${productId}/400/300`,
-        dataAiHint: data.dataAiHint || data.name.split(' ').slice(0, 2).join(' '),
+        imageUrl: imageUrl, // This will be the Data URL if an image was selected
+        dataAiHint: finalDataAiHint,
         sellerId: user.uid,
     };
 
     console.log('Product Data Submitted:', newProduct);
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 100));
+      // Simulate API call
+      await new Promise(resolve => setTimeout(resolve, 100)); 
       addProduct(newProduct);
       toast({
         title: "Product Listed!",
         description: `"${data.name}" has been added successfully.`,
       });
       form.reset();
+      setImagePreview(null); // Clear preview
+      setSelectedFile(null);
       router.push('/my-products');
     } catch (error) {
       console.error('Failed to add product:', error);
@@ -215,23 +226,76 @@ export default function SellPage() {
                     )}
                   />
               </div>
-
+              
+              {/* Updated Image Upload Field */}
               <FormField
                 control={form.control}
-                name="imageUrl"
-                render={({ field }) => (
+                name="imageUrl" // This will store the data URL or a manually entered URL
+                render={({ field }) => ( // field here refers to the imageUrl field
                   <FormItem>
-                    <FormLabel>Image URL (Optional)</FormLabel>
+                    <FormLabel>Product Image</FormLabel>
                     <FormControl>
-                      <Input type="url" placeholder="https://example.com/image.jpg" {...field} disabled={isSubmitting} />
+                        <>
+                         {/* Hidden input for React Hook Form to manage the imageUrl string (Data URL or typed URL) */}
+                         <input type="hidden" {...field} />
+                         <Input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                setSelectedFile(file);
+                                const reader = new FileReader();
+                                reader.onloadend = () => {
+                                  const dataUrl = reader.result as string;
+                                  setImagePreview(dataUrl);
+                                  form.setValue('imageUrl', dataUrl); // Set Data URL to the RHF field
+                                };
+                                reader.readAsDataURL(file);
+                              } else {
+                                setSelectedFile(null);
+                                setImagePreview(null);
+                                // If user clears file input, but had typed a URL, don't clear it.
+                                // Only clear if current value is a data URI.
+                                if (form.getValues('imageUrl').startsWith('data:image')) {
+                                   form.setValue('imageUrl', '');
+                                }
+                              }
+                            }}
+                            className="mb-2"
+                            disabled={isSubmitting}
+                          />
+                           <Input
+                            type="url"
+                            placeholder="Or paste image URL here"
+                            // Use field.value for display, but field.onChange to update RHF
+                            value={field.value?.startsWith('data:image') ? '' : field.value}
+                            onChange={(e) => {
+                                field.onChange(e.target.value); // Update RHF
+                                if (!e.target.value.startsWith('data:image') && e.target.value) {
+                                    setImagePreview(e.target.value); // Preview if it's a normal URL
+                                    setSelectedFile(null); // Clear selected file if URL is typed
+                                } else if (!e.target.value) {
+                                    setImagePreview(null);
+                                }
+                            }}
+                            disabled={isSubmitting || !!selectedFile} // Disable if file selected
+                          />
+                        </>
                     </FormControl>
+                    {imagePreview && (
+                      <div className="mt-2 relative w-full h-48 border rounded-md overflow-hidden">
+                        <Image src={imagePreview} alt="Product preview" layout="fill" objectFit="contain" />
+                      </div>
+                    )}
                     <FormDescription>
-                        Link to an image of your product. If left empty, a placeholder will be used.
+                      Upload an image or paste an image URL. If left empty, a placeholder will be used.
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
+
 
                <FormField
                 control={form.control}
@@ -243,23 +307,12 @@ export default function SellPage() {
                       <Input placeholder="e.g., stethoscope doctor" {...field} disabled={isSubmitting} />
                     </FormControl>
                     <FormDescription>
-                        Keywords for finding a relevant placeholder image (used if no URL provided).
+                        Keywords for placeholder if no image is provided (e.g., "medical device").
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-
-              <FormItem className="border border-dashed p-4 rounded-md text-center">
-                  <FormLabel className="flex flex-col items-center cursor-pointer">
-                      <UploadCloud className="h-8 w-8 text-muted-foreground mb-2" />
-                      <span className="text-sm font-medium">Upload Product Image (Coming Soon)</span>
-                      <span className="text-xs text-muted-foreground mt-1">Drag & drop or click to browse</span>
-                  </FormLabel>
-                  <FormControl>
-                    <Input type="file" className="sr-only" disabled />
-                  </FormControl>
-              </FormItem>
 
               <Button type="submit" className="w-full" disabled={isSubmitting}>
                 {isSubmitting ? (
