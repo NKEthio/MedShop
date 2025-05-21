@@ -23,6 +23,18 @@ const nextConfig: NextConfig = {
         port: '',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'placehold.co', // Added for placeholder images
+        port: '',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'sl.bing.net', // Added for sl.bing.net images
+        port: '',
+        pathname: '/**',
+      }
     ],
   },
 };
