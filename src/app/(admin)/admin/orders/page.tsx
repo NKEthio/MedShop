@@ -2,7 +2,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { collection, getDocs, doc, updateDoc, query, orderBy, Timestamp } from 'firebase/firestore';
+import { collection, getDocs, doc, updateDoc, query, orderBy, Timestamp, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
@@ -22,10 +22,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Loader2, FileText, ShieldAlert, PackageSearch } from 'lucide-react';
+import { Loader2, FileText, ShieldAlert, PackageSearch, ChevronDown, ChevronUp } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import type { Order, OrderStatus } from '@/types';
+import type { Order, OrderStatus, OrderItem } from '@/types';
 import { format } from 'date-fns';
+import Image from 'next/image';
 
 // Helper function to format Firestore Timestamp or string date
 const formatDate = (dateInput: string | Timestamp | undefined): string => {
@@ -48,6 +49,7 @@ export default function OrderManagementPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
+  const [expandedOrderIds, setExpandedOrderIds] = useState<string[]>([]);
 
   const orderStatuses: OrderStatus[] = ['Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'];
 
@@ -122,6 +124,12 @@ export default function OrderManagementPage() {
     }
   };
 
+  const toggleOrderExpansion = (orderId: string) => {
+    setExpandedOrderIds(prev =>
+      prev.includes(orderId) ? prev.filter(id => id !== orderId) : [...prev, orderId]
+    );
+  };
+
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 py-12 flex justify-center items-center min-h-[calc(100vh-200px)]">
@@ -160,7 +168,7 @@ export default function OrderManagementPage() {
             <FileText className="h-8 w-8 text-primary" />
             <div>
               <CardTitle className="text-2xl font-bold text-primary">Order Management</CardTitle>
-              <CardDescription>View and manage customer orders.</CardDescription>
+              <CardDescription>View and manage customer orders. Click 'View Items' to see products in an order.</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -181,33 +189,97 @@ export default function OrderManagementPage() {
                     <TableHead className="min-w-[180px]">Order Date</TableHead>
                     <TableHead className="min-w-[100px] text-right">Total</TableHead>
                     <TableHead className="min-w-[150px] text-center">Status</TableHead>
+                    <TableHead className="text-center min-w-[120px]">Details</TableHead>
                     <TableHead className="text-right min-w-[180px]">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {orders.map((order) => (
-                    <TableRow key={order.id}>
-                      <TableCell className="font-medium truncate max-w-xs">{order.id}</TableCell>
-                      <TableCell className="truncate max-w-xs">{order.userEmail}</TableCell>
-                      <TableCell>{order.orderDate}</TableCell>
-                      <TableCell className="text-right">${order.totalAmount.toFixed(2)}</TableCell>
-                      <TableCell className="text-center capitalize">{order.status}</TableCell>
-                      <TableCell className="text-right">
-                        <Select
-                          value={order.status}
-                          onValueChange={(value) => handleStatusChange(order.id, value as OrderStatus)}
-                        >
-                          <SelectTrigger className="w-[150px] h-9">
-                            <SelectValue placeholder="Change status" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {orderStatuses.map(status => (
-                                <SelectItem key={status} value={status}>{status}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </TableCell>
-                    </TableRow>
+                    <>
+                      <TableRow key={order.id}>
+                        <TableCell className="font-medium truncate max-w-xs">{order.id}</TableCell>
+                        <TableCell className="truncate max-w-xs">{order.userEmail}</TableCell>
+                        <TableCell>{order.orderDate}</TableCell>
+                        <TableCell className="text-right">${order.totalAmount.toFixed(2)}</TableCell>
+                        <TableCell className="text-center capitalize">{order.status}</TableCell>
+                        <TableCell className="text-center">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => toggleOrderExpansion(order.id)}
+                            aria-expanded={expandedOrderIds.includes(order.id)}
+                            aria-controls={`order-details-${order.id}`}
+                          >
+                            {expandedOrderIds.includes(order.id) ? (
+                              <>
+                                <ChevronUp className="mr-1 h-4 w-4" /> Hide
+                              </>
+                            ) : (
+                              <>
+                                <ChevronDown className="mr-1 h-4 w-4" /> View
+                              </>
+                            )}
+                          </Button>
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Select
+                            value={order.status}
+                            onValueChange={(value) => handleStatusChange(order.id, value as OrderStatus)}
+                          >
+                            <SelectTrigger className="w-[150px] h-9">
+                              <SelectValue placeholder="Change status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {orderStatuses.map(status => (
+                                  <SelectItem key={status} value={status}>{status}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </TableCell>
+                      </TableRow>
+                      {expandedOrderIds.includes(order.id) && (
+                        <TableRow key={`${order.id}-details`} id={`order-details-${order.id}`} className="bg-muted/30 hover:bg-muted/30">
+                          <TableCell colSpan={7}> {/* Adjusted colSpan */}
+                            <div className="p-4">
+                              <h4 className="text-md font-semibold mb-3 text-primary">Order Items:</h4>
+                              {order.items && order.items.length > 0 ? (
+                                <ul className="space-y-3">
+                                  {order.items.map((item: OrderItem, index: number) => (
+                                    <li key={index} className="flex items-start sm:items-center gap-3 p-3 border rounded-md shadow-sm bg-background flex-col sm:flex-row">
+                                      {item.imageUrl && (
+                                        <div className="relative w-16 h-16 flex-shrink-0">
+                                          <Image
+                                            src={item.imageUrl}
+                                            alt={item.name}
+                                            fill
+                                            sizes="64px"
+                                            style={{ objectFit: 'cover' }}
+                                            className="rounded"
+                                            data-ai-hint={item.dataAiHint || item.name.split(' ').slice(0,2).join(' ')}
+                                          />
+                                        </div>
+                                      )}
+                                      <div className="flex-grow">
+                                        <p className="font-medium">{item.name}</p>
+                                        <p className="text-sm text-muted-foreground">
+                                          Quantity: {item.quantity}
+                                        </p>
+                                      </div>
+                                      <div className="text-sm text-right sm:text-left mt-2 sm:mt-0">
+                                        <p>Price/unit: ${item.price.toFixed(2)}</p>
+                                        <p className="font-semibold">Subtotal: ${(item.price * item.quantity).toFixed(2)}</p>
+                                      </div>
+                                    </li>
+                                  ))}
+                                </ul>
+                              ) : (
+                                <p className="text-muted-foreground">No items found in this order.</p>
+                              )}
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </>
                   ))}
                 </TableBody>
               </Table>
@@ -218,3 +290,5 @@ export default function OrderManagementPage() {
     </div>
   );
 }
+
+    
