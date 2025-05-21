@@ -13,11 +13,11 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, PackagePlus } from 'lucide-react'; // Removed UploadCloud as it's integrated now
+import { Loader2, PackagePlus } from 'lucide-react'; 
 import Link from 'next/link';
 import type { Product } from '@/types';
 import { addProduct } from '@/data/products';
-import Image from 'next/image'; // Added for image preview
+import Image from 'next/image'; 
 
 const productSchema = z.object({
   name: z.string().min(3, { message: 'Product name must be at least 3 characters.' }),
@@ -27,7 +27,7 @@ const productSchema = z.object({
     .positive({ message: 'Price must be positive.' })
     .min(0.01, { message: 'Price must be at least $0.01.' }),
   category: z.string().min(2, { message: 'Category must be at least 2 characters.' }),
-  imageUrl: z.string().url({ message: 'Please enter a valid image URL or upload an image.' }).or(z.literal('')), // Will store Data URL if uploaded
+  imageUrl: z.string().url({ message: 'Please enter a valid image URL or upload an image.' }).or(z.literal('')), 
   dataAiHint: z.string().optional(),
 });
 
@@ -72,8 +72,8 @@ export default function SellPage() {
 
     const productId = `prod_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
 
-    // Use the Data URL from the form if an image was uploaded, otherwise generate placeholder
-    const imageUrl = data.imageUrl || `https://picsum.photos/seed/${productId}/400/300`;
+    
+    const imageUrl = data.imageUrl || `https://placehold.co/400x300.png`;
     const finalDataAiHint = data.imageUrl ? data.name.split(' ').slice(0,2).join(' ') : (data.dataAiHint || data.name.split(' ').slice(0, 2).join(' '));
 
 
@@ -83,7 +83,7 @@ export default function SellPage() {
         description: data.description,
         price: data.price,
         category: data.category,
-        imageUrl: imageUrl, // This will be the Data URL if an image was selected
+        imageUrl: imageUrl, 
         dataAiHint: finalDataAiHint,
         sellerId: user.uid,
     };
@@ -91,7 +91,7 @@ export default function SellPage() {
     console.log('Product Data Submitted:', newProduct);
 
     try {
-      // Simulate API call
+      
       await new Promise(resolve => setTimeout(resolve, 100)); 
       addProduct(newProduct);
       toast({
@@ -99,7 +99,7 @@ export default function SellPage() {
         description: `"${data.name}" has been added successfully.`,
       });
       form.reset();
-      setImagePreview(null); // Clear preview
+      setImagePreview(null); 
       setSelectedFile(null);
       router.push('/my-products');
     } catch (error) {
@@ -227,16 +227,16 @@ export default function SellPage() {
                   />
               </div>
               
-              {/* Updated Image Upload Field */}
+              
               <FormField
                 control={form.control}
-                name="imageUrl" // This will store the data URL or a manually entered URL
-                render={({ field }) => ( // field here refers to the imageUrl field
+                name="imageUrl" 
+                render={({ field }) => ( 
                   <FormItem>
                     <FormLabel>Product Image</FormLabel>
                     <FormControl>
-                        <>
-                         {/* Hidden input for React Hook Form to manage the imageUrl string (Data URL or typed URL) */}
+                        <div> {/* Replaced React.Fragment with div */}
+                         
                          <input type="hidden" {...field} />
                          <Input
                             type="file"
@@ -249,14 +249,13 @@ export default function SellPage() {
                                 reader.onloadend = () => {
                                   const dataUrl = reader.result as string;
                                   setImagePreview(dataUrl);
-                                  form.setValue('imageUrl', dataUrl); // Set Data URL to the RHF field
+                                  form.setValue('imageUrl', dataUrl); 
                                 };
                                 reader.readAsDataURL(file);
                               } else {
                                 setSelectedFile(null);
                                 setImagePreview(null);
-                                // If user clears file input, but had typed a URL, don't clear it.
-                                // Only clear if current value is a data URI.
+                                
                                 if (form.getValues('imageUrl').startsWith('data:image')) {
                                    form.setValue('imageUrl', '');
                                 }
@@ -268,20 +267,20 @@ export default function SellPage() {
                            <Input
                             type="url"
                             placeholder="Or paste image URL here"
-                            // Use field.value for display, but field.onChange to update RHF
+                            
                             value={field.value?.startsWith('data:image') ? '' : field.value}
                             onChange={(e) => {
-                                field.onChange(e.target.value); // Update RHF
+                                field.onChange(e.target.value); 
                                 if (!e.target.value.startsWith('data:image') && e.target.value) {
-                                    setImagePreview(e.target.value); // Preview if it's a normal URL
-                                    setSelectedFile(null); // Clear selected file if URL is typed
+                                    setImagePreview(e.target.value); 
+                                    setSelectedFile(null); 
                                 } else if (!e.target.value) {
                                     setImagePreview(null);
                                 }
                             }}
-                            disabled={isSubmitting || !!selectedFile} // Disable if file selected
+                            disabled={isSubmitting || !!selectedFile} 
                           />
-                        </>
+                        </div>
                     </FormControl>
                     {imagePreview && (
                       <div className="mt-2 relative w-full h-48 border rounded-md overflow-hidden">
@@ -331,3 +330,4 @@ export default function SellPage() {
     </div>
   );
 }
+
