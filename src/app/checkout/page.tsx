@@ -16,7 +16,7 @@ import { useRouter } from 'next/navigation';
 import { processPayment, type PaymentInfo } from '@/services/payment';
 import { toast } from "@/hooks/use-toast";
 import Image from 'next/image';
-import { Loader2 } from 'lucide-react';
+import { Loader2, MapPin } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { collection, addDoc, serverTimestamp, Timestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase';
@@ -48,10 +48,45 @@ export default function CheckoutPage() {
   const router = useRouter();
   const [isProcessing, setIsProcessing] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const [locationCoordinates, setLocationCoordinates] = useState<{ latitude: number; longitude: number } | null>(null);
 
   useEffect(() => {
     setIsClient(true);
   }, []);
+
+  useEffect(() => {
+    if (isClient) {
+      if (navigator.geolocation) {
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            setLocationCoordinates({
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude,
+            });
+            toast({
+              title: "Location Fetched",
+              description: "Your location has been recorded for this order.",
+              variant: "default",
+            });
+          },
+          (error) => {
+            console.warn("Error fetching location:", error);
+            toast({
+              title: "Location Access Denied",
+              description: "Could not retrieve your location. Order will proceed without it.",
+              variant: "default", // Use default or a less intrusive variant
+            });
+          }
+        );
+      } else {
+        toast({
+          title: "Geolocation Not Supported",
+          description: "Your browser does not support geolocation. Order will proceed without location data.",
+          variant: "default",
+        });
+      }
+    }
+  }, [isClient]);
 
 
   const form = useForm<CheckoutFormData>({
@@ -75,7 +110,7 @@ export default function CheckoutPage() {
       toast({
           title: "Cart Empty",
           description: "Your cart is empty. Redirecting to products.",
-          variant: "default", // Changed from destructive for less alarm
+          variant: "default", 
       });
       router.replace('/products');
     }
@@ -128,17 +163,16 @@ export default function CheckoutPage() {
             phone: data.phone,
         };
 
-        const newOrder: Omit<Order, 'id' | 'orderDate' | 'lastUpdated'> = {
+        const newOrder: Omit<Order, 'id' | 'orderDate' | 'lastUpdated'> & { location?: typeof locationCoordinates } = {
             userId: user.uid,
-            userEmail: user.email || data.email, // Prefer user's auth email
+            userEmail: user.email || data.email,
             items: orderItems,
             shippingAddress: shippingAddress,
             totalAmount: cartTotal,
             status: 'Pending' as OrderStatus,
-            // orderDate and lastUpdated will be set by Firestore serverTimestamp
+            location: locationCoordinates, // Add location here
         };
 
-        // Save order to Firestore
         const docRef = await addDoc(collection(db, "orders"), {
             ...newOrder,
             orderDate: serverTimestamp(),
@@ -146,7 +180,6 @@ export default function CheckoutPage() {
         });
         console.log("Order placed with ID: ", docRef.id);
 
-        // Simulate sending order to admin email (as per previous requirement)
         const orderDetailsForAdmin = {
           customerInfo: data,
           items: cartItems.map(item => ({
@@ -157,14 +190,13 @@ export default function CheckoutPage() {
             total: item.price * item.quantity,
           })),
           orderTotal: cartTotal,
-          orderId: docRef.id, // Include the new Order ID
+          orderId: docRef.id,
           orderDate: new Date().toISOString(),
+          location: locationCoordinates,
         };
         console.log("SIMULATING SENDING ORDER TO ADMIN: info1079net@gmail.com");
         console.log("Order Details:", JSON.stringify(orderDetailsForAdmin, null, 2));
-        // In a real app, you would call an API endpoint here to send an email.
-        // Example: await fetch('/api/send-order-email', { method: 'POST', body: JSON.stringify(orderDetailsForAdmin) });
-
+        
         toast({
           title: "Payment Successful!",
           description: "Your order has been placed.",
@@ -198,6 +230,12 @@ export default function CheckoutPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <h1 className="text-3xl font-bold mb-8 text-primary">Checkout</h1>
+      {locationCoordinates && (
+        <div className="mb-4 p-3 bg-secondary rounded-md text-sm text-secondary-foreground flex items-center gap-2">
+            <MapPin className="h-4 w-4" />
+            Location recorded: Lat: {locationCoordinates.latitude.toFixed(4)}, Lon: {locationCoordinates.longitude.toFixed(4)}
+        </div>
+      )}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2">
           <Card className="shadow-lg">

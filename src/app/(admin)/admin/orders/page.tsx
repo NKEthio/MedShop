@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Loader2, FileText, ShieldAlert, PackageSearch, ChevronDown, ChevronUp } from 'lucide-react';
+import { Loader2, FileText, ShieldAlert, PackageSearch, ChevronDown, ChevronUp, MapPin } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import type { Order, OrderStatus, OrderItem } from '@/types';
 import { format } from 'date-fns';
@@ -59,7 +59,6 @@ export default function OrderManagementPage() {
       setError(null);
       try {
         const ordersCollectionRef = collection(db, 'orders');
-        // Order by 'orderDate' in descending order to show newest first
         const q = query(ordersCollectionRef, orderBy('orderDate', 'desc'));
         const querySnapshot = await getDocs(q);
         const fetchedOrders: Order[] = [];
@@ -75,6 +74,7 @@ export default function OrderManagementPage() {
             status: data.status,
             orderDate: data.orderDate ? formatDate(data.orderDate as Timestamp) : 'N/A',
             lastUpdated: data.lastUpdated ? formatDate(data.lastUpdated as Timestamp) : 'N/A',
+            location: data.location || null, // Add location
           });
         });
         setOrders(fetchedOrders);
@@ -187,6 +187,7 @@ export default function OrderManagementPage() {
                     <TableHead className="min-w-[150px]">Order ID</TableHead>
                     <TableHead className="min-w-[200px]">Customer Email</TableHead>
                     <TableHead className="min-w-[180px]">Order Date</TableHead>
+                    <TableHead className="min-w-[150px]">Location (Lat, Lng)</TableHead>
                     <TableHead className="min-w-[100px] text-right">Total</TableHead>
                     <TableHead className="min-w-[150px] text-center">Status</TableHead>
                     <TableHead className="text-center min-w-[120px]">Details</TableHead>
@@ -200,6 +201,15 @@ export default function OrderManagementPage() {
                         <TableCell className="font-medium truncate max-w-xs">{order.id}</TableCell>
                         <TableCell className="truncate max-w-xs">{order.userEmail}</TableCell>
                         <TableCell>{order.orderDate}</TableCell>
+                        <TableCell>
+                          {order.location ? (
+                            <span className="text-xs">
+                              {order.location.latitude.toFixed(4)}, {order.location.longitude.toFixed(4)}
+                            </span>
+                          ) : (
+                            <span className="text-xs text-muted-foreground">N/A</span>
+                          )}
+                        </TableCell>
                         <TableCell className="text-right">${order.totalAmount.toFixed(2)}</TableCell>
                         <TableCell className="text-center capitalize">{order.status}</TableCell>
                         <TableCell className="text-center">
@@ -239,9 +249,22 @@ export default function OrderManagementPage() {
                       </TableRow>
                       {expandedOrderIds.includes(order.id) && (
                         <TableRow key={`${order.id}-details`} id={`order-details-${order.id}`} className="bg-muted/30 hover:bg-muted/30">
-                          <TableCell colSpan={7}> {/* Adjusted colSpan */}
+                          <TableCell colSpan={8}> {/* Adjusted colSpan to 8 */}
                             <div className="p-4">
-                              <h4 className="text-md font-semibold mb-3 text-primary">Order Items:</h4>
+                              <div className="mb-3 flex items-center gap-2">
+                                <MapPin className="h-4 w-4 text-primary" />
+                                <h4 className="text-md font-semibold text-primary">Order Items & Location:</h4>
+                              </div>
+                              {order.location && (
+                                <p className="text-sm text-muted-foreground mb-3">
+                                  Order placed from: Latitude {order.location.latitude.toFixed(5)}, Longitude {order.location.longitude.toFixed(5)}
+                                </p>
+                              )}
+                              {!order.location && (
+                                <p className="text-sm text-muted-foreground mb-3">
+                                  Location data not available for this order.
+                                </p>
+                              )}
                               {order.items && order.items.length > 0 ? (
                                 <ul className="space-y-3">
                                   {order.items.map((item: OrderItem, index: number) => (
@@ -290,5 +313,3 @@ export default function OrderManagementPage() {
     </div>
   );
 }
-
-    

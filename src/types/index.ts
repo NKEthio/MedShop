@@ -49,4 +49,8 @@ export interface Order {
   status: OrderStatus;
   orderDate: string; // ISO string or Firebase Timestamp
   lastUpdated: string; // ISO string or Firebase Timestamp for status changes
+  location?: { // Optional: User's location at time of order
+    latitude: number;
+    longitude: number;
+  } | null;
 }
