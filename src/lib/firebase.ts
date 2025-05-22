@@ -1,3 +1,4 @@
+
 import { initializeApp, getApps, getApp, type FirebaseOptions } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore'; // Import Firestore
@@ -19,18 +20,30 @@ const firebaseConfig: FirebaseOptions = {
 // Prefix browser-exposed variables with NEXT_PUBLIC_.
 
 // Validate Firebase config - Throw clear errors if critical keys are missing
-if (!firebaseConfig.apiKey) {
-  console.error("Firebase API Key is missing!");
-  throw new Error("Missing Firebase API Key. Ensure NEXT_PUBLIC_FIREBASE_API_KEY is set in your .env.local file. Refer to the README for setup instructions.");
+const requiredConfigKeys: Array<keyof FirebaseOptions> = [
+  'apiKey',
+  'authDomain',
+  'projectId',
+  'appId',
+]; // storageBucket and messagingSenderId might be optional depending on usage
+
+for (const key of requiredConfigKeys) {
+  if (!firebaseConfig[key]) {
+    const envVarName = `NEXT_PUBLIC_FIREBASE_${key.replace(/([A-Z])/g, '_$1').toUpperCase()}`;
+    const errorMessage = `Missing Firebase ${key}. Ensure ${envVarName} is set in your .env.local file. Refer to the README.md for setup instructions.`;
+    console.error(`Firebase Config Error: ${errorMessage}`);
+    throw new Error(errorMessage);
+  }
 }
-if (!firebaseConfig.authDomain) {
-    console.error("Firebase Auth Domain is missing!");
-    throw new Error("Missing Firebase Auth Domain. Ensure NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN is set in your .env.local file. Refer to the README for setup instructions.");
+
+// Warnings for potentially optional keys if not set, but present in config object
+if (!firebaseConfig.storageBucket) {
+    console.warn("Firebase storageBucket (NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET) is missing in .env.local. This might be required for features like image uploads to Firebase Storage.");
 }
-// Project ID is often optional but good practice to have
-if (!firebaseConfig.projectId) {
-    console.warn("Firebase projectId (NEXT_PUBLIC_FIREBASE_PROJECT_ID) is missing in .env.local. While often optional, it's recommended for full Firebase functionality.");
+if (!firebaseConfig.messagingSenderId) {
+    console.warn("Firebase messagingSenderId (NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID) is missing in .env.local. This might be required for Firebase Cloud Messaging features.");
 }
+
 
 // Initialize Firebase
 let app;
