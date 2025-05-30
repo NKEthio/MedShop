@@ -4,6 +4,7 @@ import type { Product } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { ShoppingCart, Edit, Trash2 } from 'lucide-react';
+import { useCurrency } from '@/context/CurrencyContext';
 
 interface ProductCardProps {
   product: Product;
@@ -20,6 +21,9 @@ export default function ProductCard({
   onDelete,
   showActions = false,
 }: ProductCardProps) {
+  const { formatPrice, convertToSelectedCurrency, selectedCurrency } = useCurrency();
+  const displayPrice = convertToSelectedCurrency(product.price);
+
   return (
     <Card className="group flex flex-col overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 ease-in-out hover:scale-105 animate-fadeIn">
       <CardHeader className="p-0">
@@ -39,7 +43,9 @@ export default function ProductCard({
       <CardContent className="p-4 flex-grow">
         <CardTitle className="text-lg font-semibold mb-1 line-clamp-2">{product.name}</CardTitle>
         <CardDescription className="text-sm text-muted-foreground mb-2 line-clamp-3">{product.description}</CardDescription>
-        <p className="text-lg font-bold text-primary mt-2">${product.price.toFixed(2)}</p>
+        <p className="text-lg font-bold text-primary mt-2">
+          {formatPrice(displayPrice, selectedCurrency)}
+        </p>
       </CardContent>
       <CardFooter className="p-4 pt-0 mt-auto">
         {showActions ? (
@@ -62,4 +68,3 @@ export default function ProductCard({
     </Card>
   );
 }
-
