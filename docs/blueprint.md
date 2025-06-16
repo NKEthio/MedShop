@@ -2,6 +2,11 @@
 
 ## Core Features:
 
+## Purpose:
+
+MediShop aims to provide a user-friendly and secure online platform for purchasing medical equipment.
+
+
 - Equipment Catalog: Display a catalog of medical equipment with clear product images and descriptions.
 - Shopping Cart: Allow users to add equipment to a shopping cart and proceed to checkout.
 - Secure Checkout: Implement a secure checkout process with support for major payment gateways.

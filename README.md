@@ -3,6 +3,8 @@
 
 This is a Next.js starter project for MediShop, an e-commerce platform for medical equipment, built within Firebase Studio.
 
+This project is still in development stage.
+
 ## Getting Started
 
 1.  **Install Dependencies:**
@@ -104,33 +106,3 @@ Sellers will have access to the "Sell" and "My Products" pages.
 ### Buyer Role (Default):
 
 If a user is not found in the `admins` collection and does not have a specific `role` field in their `users/{UID}` document (or the document doesn't exist), they will default to the 'buyer' role. Buyers can browse products, add to cart, and checkout.
-
-**Example `users` collection structure:**
-
-```
-users/
-  {userUID_1}/
-    role: "admin"
-    // other fields...
-  {userUID_2}/
-    role: "seller"
-    // other fields...
-  {userUID_3}/
-    role: "buyer"
-    // other fields...
-  {userUID_4}/
-    // (no role field, will default to buyer)
-```
-
-When a user with the 'admin' role logs in, the "Owner" link will appear in the header. Users with 'seller' role will see "Sell" and "My Products" links.
-
-## Environment Variables Needed
-
-*   `NEXT_PUBLIC_FIREBASE_API_KEY`
-*   `NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN`
-*   `NEXT_PUBLIC_FIREBASE_PROJECT_ID`
-*   `NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET`
-*   `NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID`
-*   `NEXT_PUBLIC_FIREBASE_APP_ID`
-*   `GOOGLE_GENAI_API_KEY` (Optional, for Genkit)
-```
