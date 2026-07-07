@@ -4,6 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Minus, Plus, Trash2 } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface CartItemCardProps {
   item: CartItem;
@@ -55,9 +60,14 @@ export default function CartItemCard({ item, onQuantityChange, onRemove }: CartI
         </div>
         {/* Grouped quantity controls */}
         <div className="flex items-center space-x-1 sm:space-x-2 flex-shrink-0">
-          <Button variant="outline" size="icon" className="h-8 w-8 sm:h-9 sm:w-9" onClick={() => handleQuantityChange(-1)} aria-label="Decrease quantity">
-            <Minus className="h-4 w-4" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="outline" size="icon" className="h-8 w-8 sm:h-9 sm:w-9" onClick={() => handleQuantityChange(-1)} aria-label="Decrease quantity">
+                <Minus className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Decrease quantity</TooltipContent>
+          </Tooltip>
           <Input
             type="number"
             min="1" // Min attribute for native browser validation
@@ -67,18 +77,28 @@ export default function CartItemCard({ item, onQuantityChange, onRemove }: CartI
             className="w-12 sm:w-16 text-center h-8 sm:h-9 px-1"
             aria-label={`Quantity for ${item.name}`}
           />
-          <Button variant="outline" size="icon" className="h-8 w-8 sm:h-9 sm:w-9" onClick={() => handleQuantityChange(1)} aria-label="Increase quantity">
-            <Plus className="h-4 w-4" />
-          </Button>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="outline" size="icon" className="h-8 w-8 sm:h-9 sm:w-9" onClick={() => handleQuantityChange(1)} aria-label="Increase quantity">
+                <Plus className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>Increase quantity</TooltipContent>
+          </Tooltip>
         </div>
          {/* Adjusted width and text alignment for consistency */}
         <div className="text-right font-semibold w-20 sm:w-24 text-sm sm:text-base">
           ${(item.price * item.quantity).toFixed(2)}
         </div>
          {/* Ensured button is consistently placed */}
-        <Button variant="ghost" size="icon" onClick={() => onRemove(item.id)} className="text-destructive h-8 w-8 sm:h-9 sm:w-9 ml-auto sm:ml-0" aria-label={`Remove ${item.name} from cart`}>
-          <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" />
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button variant="ghost" size="icon" onClick={() => onRemove(item.id)} className="text-destructive h-8 w-8 sm:h-9 sm:w-9 ml-auto sm:ml-0" aria-label={`Remove ${item.name} from cart`}>
+              <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>Remove item</TooltipContent>
+        </Tooltip>
       </CardContent>
     </Card>
   );
