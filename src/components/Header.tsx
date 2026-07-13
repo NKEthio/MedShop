@@ -14,6 +14,11 @@ import {
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
 } from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Sheet,
@@ -93,25 +98,39 @@ export default function Header({ cartItemCount }: HeaderProps) {
              </>
           )}
 
-          <Link href="/cart" passHref>
-            <Button variant="ghost" size="icon" className="relative" aria-label="Shopping Cart">
-              <ShoppingCart className="h-5 w-5 text-accent" />
-              {cartItemCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
-                  {cartItemCount}
-                </span>
-              )}
-            </Button>
-          </Link>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link href="/cart" passHref>
+                <Button variant="ghost" size="icon" className="relative" aria-label="Shopping Cart">
+                  <ShoppingCart className="h-5 w-5 text-accent" />
+                  {cartItemCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
+                      {cartItemCount}
+                    </span>
+                  )}
+                </Button>
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Shopping Cart ({cartItemCount} items)</p>
+            </TooltipContent>
+          </Tooltip>
 
           {/* Currency Selector */}
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="flex items-center gap-1">
-                {getCurrencyIcon(selectedCurrency)}
-                <span className="hidden lg:inline">{selectedCurrency}</span>
-              </Button>
-            </DropdownMenuTrigger>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="sm" className="flex items-center gap-1">
+                    {getCurrencyIcon(selectedCurrency)}
+                    <span className="hidden lg:inline">{selectedCurrency}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Select Currency (Current: {selectedCurrency})</p>
+              </TooltipContent>
+            </Tooltip>
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Select Currency</DropdownMenuLabel>
               <DropdownMenuRadioGroup value={selectedCurrency} onValueChange={(value) => setSelectedCurrency(value as Currency)}>
@@ -211,6 +230,7 @@ export default function Header({ cartItemCount }: HeaderProps) {
                 )}
                 </Button>
             </Link>
+
              <Sheet>
                 <SheetTrigger asChild>
                     <Button variant="ghost" size="icon" aria-label="Open menu">
