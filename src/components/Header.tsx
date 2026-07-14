@@ -24,6 +24,11 @@ import {
   SheetClose,
 } from "@/components/ui/sheet";
 import { Separator } from '@/components/ui/separator';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 
 interface HeaderProps {
@@ -93,16 +98,23 @@ export default function Header({ cartItemCount }: HeaderProps) {
              </>
           )}
 
-          <Link href="/cart" passHref>
-            <Button variant="ghost" size="icon" className="relative" aria-label="Shopping Cart">
-              <ShoppingCart className="h-5 w-5 text-accent" />
-              {cartItemCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
-                  {cartItemCount}
-                </span>
-              )}
-            </Button>
-          </Link>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link href="/cart" passHref>
+                <Button variant="ghost" size="icon" className="relative" aria-label="Shopping Cart">
+                  <ShoppingCart className="h-5 w-5 text-accent" />
+                  {cartItemCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
+                      {cartItemCount}
+                    </span>
+                  )}
+                </Button>
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>Shopping Cart</p>
+            </TooltipContent>
+          </Tooltip>
 
           {/* Currency Selector */}
           <DropdownMenu>
@@ -212,11 +224,18 @@ export default function Header({ cartItemCount }: HeaderProps) {
                 </Button>
             </Link>
              <Sheet>
-                <SheetTrigger asChild>
-                    <Button variant="ghost" size="icon" aria-label="Open menu">
-                        <Menu className="h-6 w-6" />
-                    </Button>
-                </SheetTrigger>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <SheetTrigger asChild>
+                        <Button variant="ghost" size="icon" aria-label="Open menu">
+                            <Menu className="h-6 w-6" />
+                        </Button>
+                    </SheetTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Open Menu</p>
+                  </TooltipContent>
+                </Tooltip>
                 <SheetContent side="right" className="w-[280px] sm:w-[320px]">
                     <SheetHeader>
                          <SheetTitle asChild>
