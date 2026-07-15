@@ -14,6 +14,11 @@ import {
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
 } from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   Sheet,
@@ -93,16 +98,21 @@ export default function Header({ cartItemCount }: HeaderProps) {
              </>
           )}
 
-          <Link href="/cart" passHref>
-            <Button variant="ghost" size="icon" className="relative" aria-label="Shopping Cart">
-              <ShoppingCart className="h-5 w-5 text-accent" />
-              {cartItemCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
-                  {cartItemCount}
-                </span>
-              )}
-            </Button>
-          </Link>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Link href="/cart" passHref>
+                <Button variant="ghost" size="icon" className="relative" aria-label="Shopping Cart">
+                  <ShoppingCart className="h-5 w-5 text-accent" />
+                  {cartItemCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-destructive text-destructive-foreground text-xs rounded-full h-5 w-5 flex items-center justify-center animate-pulse">
+                      {cartItemCount}
+                    </span>
+                  )}
+                </Button>
+              </Link>
+            </TooltipTrigger>
+            <TooltipContent>Shopping Cart</TooltipContent>
+          </Tooltip>
 
           {/* Currency Selector */}
           <DropdownMenu>
