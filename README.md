@@ -56,6 +56,25 @@ This project is still in development stage.
 *   Responsive Design
 *   **(Optional)** Genkit integration for potential GenAI features (requires setup)
 
+## Capacitor Migration (Android/iOS)
+
+Capacitor has been added so the Next.js app can be packaged as a mobile app.
+
+### Commands
+
+```bash
+npm run cap:add:android
+npm run cap:add:ios
+npm run cap:sync
+npm run cap:open:android
+npm run cap:open:ios
+```
+
+### Notes
+
+* `npm run cap:sync` builds the static web app (`out/`) and syncs it into native projects.
+* Native project folders (`android/`, `ios/`) are created when you run the corresponding `cap:add:*` command.
+
 ## Setting up User Roles (Admin, Seller, Buyer)
 
 User roles are managed in Firestore.
