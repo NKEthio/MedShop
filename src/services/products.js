@@ -1,4 +1,4 @@
-import { collection, getDocs, orderBy, query } from 'firebase/firestore';
+import { collection, getDocs } from 'firebase/firestore';
 import { db, hasFirebaseConfig } from './firebase';
 
 export async function getProducts() {
@@ -7,7 +7,7 @@ export async function getProducts() {
   }
 
   const productsRef = collection(db, 'products');
-  const snapshot = await getDocs(query(productsRef, orderBy('name')));
+  const snapshot = await getDocs(productsRef);
 
   return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 }

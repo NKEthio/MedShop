@@ -91,6 +91,17 @@ When checkout succeeds, a document is written to Firestore collection **`orders`
 - `total`
 - `createdAt`
 
-## Deploy
+## 6) Deploy (Firebase Hosting)
 
-You can deploy the Vite `dist/` output to Firebase Hosting, Netlify, Vercel, or similar static hosts.
+```bash
+npm run build
+npm install -g firebase-tools
+firebase login
+firebase init hosting
+# choose existing Firebase project
+# public directory: dist
+# configure as single-page app: Yes
+firebase deploy
+```
+
+You can also deploy `dist/` to Netlify, Vercel, or other static hosts.
