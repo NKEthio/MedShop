@@ -136,8 +136,6 @@ export default function MyProductsPage() {
             imageUrl: data.imageUrl || productToEdit.imageUrl, // Keep original image if new URL is empty
         };
         try {
-            // Simulate API call
-            await new Promise(resolve => setTimeout(resolve, 500)); 
             const success = updateProductInData(updatedProduct);
             if (success) {
                 setMyProducts(prev => prev.map(p => p.id === updatedProduct.id ? updatedProduct : p));

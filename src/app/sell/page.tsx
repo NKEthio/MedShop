@@ -91,8 +91,6 @@ export default function SellPage() {
     console.log('Product Data Submitted:', newProduct);
 
     try {
-      
-      await new Promise(resolve => setTimeout(resolve, 100)); 
       addProduct(newProduct);
       toast({
         title: "Product Listed!",
