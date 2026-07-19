@@ -1,108 +1,96 @@
+# MedShop (Minimal React + Vite + Firebase MVP)
 
-# Firebase Studio - MediShop E-commerce
+A minimal, fast e-commerce MVP using React + Vite on the frontend and Firebase Firestore as the backend.
 
-This is a Next.js starter project for MediShop, an e-commerce platform for medical equipment, built within Firebase Studio.
+## Stack
 
-This project is still in development stage.
+- React + Vite
+- React Router
+- Firebase JS SDK (Firestore)
+- Plain CSS
 
-## Getting Started
+## Project structure
 
-1.  **Install Dependencies:**
-    ```bash
-    npm install
-    # or
-    yarn install
-    # or
-    pnpm install
-    ```
+```txt
+src/
+  components/
+    ProductCard.jsx
+    Navbar.jsx
+    CartItem.jsx
+  pages/
+    Home.jsx
+    Cart.jsx
+    Checkout.jsx
+  context/
+    CartContext.jsx
+  services/
+    firebase.js
+    products.js
+    orders.js
+  App.jsx
+  main.jsx
+  styles.css
+```
 
-2.  **Set up Environment Variables:**
-    *   Copy the example environment file:
-        ```bash
-        cp src/.env.local.example src/.env.local
-        ```
-    *   Open `src/.env.local` and fill in your Firebase project configuration values. You can find these in your Firebase project settings (Project settings > General > Your apps > Web app > SDK setup and configuration > Config).
-    *   **(Optional)** If you plan to use GenAI features with Genkit, uncomment and add your `GOOGLE_GENAI_API_KEY`.
+## 1) Firebase setup
 
-3.  **Run the Development Server:**
-    ```bash
-    npm run dev
-    # or
-    yarn dev
-    # or
-    pnpm dev
-    ```
-    The application will be available at [http://localhost:9002](http://localhost:9002) (or the port specified in `package.json`).
+1. Create a Firebase project at https://console.firebase.google.com
+2. Create a **Firestore Database** (start in test mode for local MVP work).
+3. Create a **Web App** in Project Settings and copy the Firebase config values.
+4. In your local project, create `.env` from the example:
 
-4.  **Explore the Code:**
-    *   Start by looking at the main page component: `src/app/page.tsx`.
-    *   Firebase configuration is in `src/lib/firebase.ts`.
-    *   Authentication context is managed in `src/context/AuthContext.tsx`.
-    *   Product data is located in `src/data/products.ts`.
-    *   UI components built with ShadCN/UI are in `src/components/ui/`.
+```bash
+cp .env.example .env
+```
 
-## Features
+5. Fill in these exact env vars in `.env`:
 
-*   Next.js 15 (App Router)
-*   TypeScript
-*   Tailwind CSS with ShadCN/UI components
-*   Firebase Authentication (Email/Password)
-*   Firestore for data (User roles: Admin, Seller, Buyer)
-*   Shopping Cart functionality (`useCart` hook)
-*   Basic Checkout Flow (stubbed payment processing)
-*   Product Listing and Detail Pages (including selling, editing, deleting for authorized users)
-*   Owner Dashboard for Admins
-*   Profile Page displaying user role
-*   Responsive Design
-*   **(Optional)** Genkit integration for potential GenAI features (requires setup)
+- `VITE_FIREBASE_API_KEY`
+- `VITE_FIREBASE_AUTH_DOMAIN`
+- `VITE_FIREBASE_PROJECT_ID`
+- `VITE_FIREBASE_STORAGE_BUCKET`
+- `VITE_FIREBASE_MESSAGING_SENDER_ID`
+- `VITE_FIREBASE_APP_ID`
 
-## Setting up User Roles (Admin, Seller, Buyer)
+## 2) Seed sample products
 
-User roles are managed in Firestore.
+In Firebase Console → Firestore → Data, create collection **`products`** and add sample documents like:
 
-### Admin Role:
-There are two ways to designate a user as an admin:
+```json
+{
+  "name": "Digital Thermometer",
+  "price": 12.99,
+  "image": "https://images.unsplash.com/photo-1584515933487-779824d29309"
+}
+```
 
-1.  **Primary Method (via `users` collection - Recommended for all roles):**
-    *   Create a user account in your application.
-    *   Find the user's Firebase UID (Firebase console -> Authentication -> Users).
-    *   Go to Firestore Database -> Data tab.
-    *   Create a collection named `users` if it doesn't exist.
-    *   Add a new document to the `users` collection. Set the **Document ID** to the user's UID.
-    *   Inside this document, add a field:
-        *   **Field name:** `role`
-        *   **Field type:** `string`
-        *   **Field value:** `admin`
-    *   Click "Save".
+Add a few products. The Home page reads from `products` and shows an empty state when none exist.
 
-2.  **Legacy Method (via `admins` collection - Still works for 'admin'):**
-    *   Create a user account (e.g., `nuredinkassaw599@gmail.com`).
-    *   Find their Firebase UID.
-    *   Go to Firestore Database -> Data tab.
-    *   Create the `admins` collection if it doesn't exist.
-    *   Add a document to the `admins` collection:
-        *   **Document ID:** User's UID.
-        *   Fields can be empty or have `role: "owner"`. The existence of the UID as a document ID is sufficient for admin rights through this legacy method.
-    *   Click "Save".
+## 3) Run locally
 
-The `AuthProvider` will first check the `admins` collection. If the user's UID is found there, they are an 'admin'. Otherwise, it checks the `users/{UID}` document for a `role` field.
+```bash
+npm install
+npm run dev
+```
 
-### Seller Role:
+App runs on the URL printed by Vite (usually http://localhost:5173).
 
-1.  **Create a user account.**
-2.  **Find the user's Firebase UID.**
-3.  **Go to Firestore Database -> Data tab.**
-4.  **Ensure the `users` collection exists.**
-5.  **Add/Update the user's document in the `users` collection:**
-    *   If a document with the user's UID as ID doesn't exist, create it.
-    *   Add/Set a field:
-        *   **Field name:** `role`
-        *   **Field type:** `string`
-        *   **Field value:** `seller`
-    *   Click "Save".
+## 4) Build and preview
 
-Sellers will have access to the "Sell" and "My Products" pages.
+```bash
+npm run build
+npm run preview
+```
 
-### Buyer Role (Default):
+## 5) Checkout data
 
-If a user is not found in the `admins` collection and does not have a specific `role` field in their `users/{UID}` document (or the document doesn't exist), they will default to the 'buyer' role. Buyers can browse products, add to cart, and checkout.
+When checkout succeeds, a document is written to Firestore collection **`orders`** with:
+
+- `customer` (`name`, `phone`, `address`)
+- `items` (cart line items)
+- `total`
+- `createdAt`
+
+## Deploy
+
+You can deploy the Vite `dist/` output to Firebase Hosting, Netlify, Vercel, or similar static hosts.
